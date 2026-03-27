@@ -1,0 +1,65 @@
+#main {
+    height: 1fr;
+}
+
+#sidebar {
+    width: 36;
+    padding: 1 2;
+    background: $boost;
+    border-right: tall $background-lighten-2;
+}
+
+#content {
+    width: 1fr;
+    padding: 1 2;
+}
+
+#user-info {
+    text-style: bold;
+    color: $success;
+    padding-bottom: 1;
+}
+
+#section-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#format-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#format-radio {
+    height: auto;
+    padding-bottom: 1;
+}
+
+#export-btn {
+    width: 100%;
+    margin-top: 1;
+}
+
+#progress {
+    margin-bottom: 1;
+}
+
+#log {
+    height: 1fr;
+    border: round $primary;
+    padding: 1;
+}
+
+Checkbox {
+    height: auto;
+    padding: 0;
+}
+
+RadioButton {
+    height: auto;
+    padding: 0;
+}
+
+Rule {
+    margin: 1 0;
+}

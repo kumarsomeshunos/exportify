@@ -1,6 +1,6 @@
 # Exportify
 
-Export your Spotify data — liked songs, playlists, top tracks, artists, and more — to JSON or CSV.
+Export your Spotify data — liked songs, playlists, top tracks, artists, and more — to JSON or CSV via an interactive terminal UI.
 
 ## Setup
 
@@ -21,35 +21,31 @@ Export your Spotify data — liked songs, playlists, top tracks, artists, and mo
 ## Usage
 
 ```sh
-# Export everything (default)
 uv run exportify
-
-# Export only liked songs
-uv run exportify --liked-songs
-
-# Export as CSV instead of JSON
-uv run exportify --format csv
-
-# Export specific data
-uv run exportify --playlists --top-tracks --top-artists
-
-# Custom output directory
-uv run exportify --output my_data
 ```
 
-### Available Flags
+This launches an interactive TUI where you can:
+- **Select categories** to export using checkboxes
+- **Choose format** (JSON or CSV)
+- **Press Export** (or hit `E`) to start
 
-| Flag                 | Description                        |
-| -------------------- | ---------------------------------- |
-| `--all`              | Export everything (default)        |
-| `--liked-songs`      | Liked/saved songs                  |
-| `--playlists`        | Playlists and their tracks         |
-| `--top-tracks`       | Top tracks (4w / 6m / all time)    |
-| `--top-artists`      | Top artists (4w / 6m / all time)   |
-| `--followed-artists` | Followed artists                   |
-| `--recently-played`  | Recently played tracks             |
-| `-f`, `--format`     | `json` (default) or `csv`          |
-| `-o`, `--output`     | Output directory (default: export) |
+### Keyboard Shortcuts
+
+| Key | Action      |
+| --- | ----------- |
+| `E` | Export      |
+| `A` | Select All  |
+| `N` | Select None |
+| `Q` | Quit        |
+
+### Export Categories
+
+- Liked Songs
+- Playlists & Tracks
+- Top Tracks (4 weeks / 6 months / all time)
+- Top Artists (4 weeks / 6 months / all time)
+- Followed Artists
+- Recently Played
 
 ## Output
 
