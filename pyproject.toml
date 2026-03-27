@@ -1,0 +1,14 @@
+[project]
+name = "exportify"
+version = "0.1.0"
+description = "Export your Spotify data — liked songs, playlists, top tracks, artists, and more."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "python-dotenv>=1.2.2",
+    "rich>=14.3.3",
+    "spotipy>=2.26.0",
+]
+
+[project.scripts]
+exportify = "main:main"
