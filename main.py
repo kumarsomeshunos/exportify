@@ -294,7 +294,17 @@ def main():
     sp = get_spotify_client()
 
     # Verify connection
-    user = sp.current_user()
+    try:
+        user = sp.current_user()
+    except spotipy.exceptions.SpotifyException as e:
+        if e.http_status == 403:
+            console.print(
+                "[bold red]Error:[/] Spotify returned 403 Forbidden.\n"
+                "This usually means the app owner needs an active [bold]Spotify Premium[/] subscription.\n"
+                "See: https://developer.spotify.com/documentation/web-api"
+            )
+            sys.exit(1)
+        raise
     console.print(f"\n[bold]Logged in as:[/] {user['display_name']} ({user['id']})\n")
 
     combined: dict[str, any] = {}
