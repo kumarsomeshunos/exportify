@@ -284,6 +284,8 @@ def main():
     user = sp.current_user()
     console.print(f"\n[bold]Logged in as:[/] {user['display_name']} ({user['id']})\n")
 
+    combined: dict[str, any] = {}
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -293,8 +295,9 @@ def main():
         if export_all or args.liked_songs:
             task = progress.add_task("Fetching liked songs...", total=None)
             liked = fetch_liked_songs(sp)
-            path = export_data(liked, "liked_songs", out_dir, fmt)
-            progress.update(task, description=f"Liked songs → {path}")
+            export_data(liked, "liked_songs", out_dir, fmt)
+            combined["liked_songs"] = liked
+            progress.update(task, description="Liked songs")
             progress.stop_task(task)
             print_summary("Liked songs", len(liked))
 
@@ -308,19 +311,25 @@ def main():
 
             # Export each playlist's tracks
             playlists_dir = out_dir / "playlists"
+            playlist_tracks_combined = {}
             for pl in playlists:
                 task = progress.add_task(f"  Fetching: {pl['name'][:40]}...", total=None)
                 tracks = fetch_playlist_tracks(sp, pl["id"])
                 safe_name = "".join(c if c.isalnum() or c in " _-" else "_" for c in pl["name"])
                 export_data(tracks, safe_name.strip(), playlists_dir, fmt)
+                playlist_tracks_combined[pl["name"]] = tracks
                 progress.update(task, description=f"  {pl['name'][:40]} ({len(tracks)} tracks)")
                 progress.stop_task(task)
+
+            combined["playlists"] = playlists
+            combined["playlist_tracks"] = playlist_tracks_combined
 
         if export_all or args.top_tracks:
             for time_range, label in [("short_term", "4 weeks"), ("medium_term", "6 months"), ("long_term", "all time")]:
                 task = progress.add_task(f"Fetching top tracks ({label})...", total=None)
                 tracks = fetch_top_tracks(sp, time_range)
                 export_data(tracks, f"top_tracks_{time_range}", out_dir, fmt)
+                combined[f"top_tracks_{time_range}"] = tracks
                 progress.update(task, description=f"Top tracks ({label})")
                 progress.stop_task(task)
                 print_summary(f"Top tracks ({label})", len(tracks))
@@ -330,6 +339,7 @@ def main():
                 task = progress.add_task(f"Fetching top artists ({label})...", total=None)
                 artists = fetch_top_artists(sp, time_range)
                 export_data(artists, f"top_artists_{time_range}", out_dir, fmt)
+                combined[f"top_artists_{time_range}"] = artists
                 progress.update(task, description=f"Top artists ({label})")
                 progress.stop_task(task)
                 print_summary(f"Top artists ({label})", len(artists))
@@ -338,6 +348,7 @@ def main():
             task = progress.add_task("Fetching followed artists...", total=None)
             followed = fetch_followed_artists(sp)
             export_data(followed, "followed_artists", out_dir, fmt)
+            combined["followed_artists"] = followed
             progress.update(task, description="Followed artists")
             progress.stop_task(task)
             print_summary("Followed artists", len(followed))
@@ -346,11 +357,16 @@ def main():
             task = progress.add_task("Fetching recently played...", total=None)
             recent = fetch_recently_played(sp)
             export_data(recent, "recently_played", out_dir, fmt)
+            combined["recently_played"] = recent
             progress.update(task, description="Recently played")
             progress.stop_task(task)
             print_summary("Recently played", len(recent))
 
+    # Always save a combined JSON with all exported data
+    combined_path = out_dir / "exportify.json"
+    save_json(combined, combined_path)
     console.print(f"\n[bold green]Done![/] Data exported to [bold]{out_dir}[/]")
+    console.print(f"  Combined JSON: [bold]{combined_path}[/]")
 
 
 if __name__ == "__main__":
