@@ -124,15 +124,18 @@ def fetch_playlists(sp, log_fn=None):
     results = _api_call_with_retry(sp.current_user_playlists, limit=50, log_fn=log_fn)
     while results:
         for item in results["items"]:
+            if not item:
+                continue
+            tracks_info = item.get("tracks") or {}
             playlists.append({
-                "name": item["name"],
+                "name": item.get("name", ""),
                 "id": item["id"],
                 "description": item.get("description", ""),
-                "owner": item["owner"]["display_name"],
-                "public": item["public"],
-                "total_tracks": item["tracks"]["total"],
-                "spotify_url": item["external_urls"].get("spotify", ""),
-                "uri": item["uri"],
+                "owner": item.get("owner", {}).get("display_name", ""),
+                "public": item.get("public"),
+                "total_tracks": tracks_info.get("total", 0),
+                "spotify_url": item.get("external_urls", {}).get("spotify", ""),
+                "uri": item.get("uri", ""),
             })
         results = _api_call_with_retry(sp.next, results, log_fn=log_fn) if results["next"] else None
     return playlists
