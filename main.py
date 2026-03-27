@@ -166,14 +166,16 @@ def fetch_top_tracks(sp, time_range="medium_term", log_fn=None):
     tracks = []
     results = _api_call_with_retry(sp.current_user_top_tracks, limit=50, time_range=time_range, log_fn=log_fn)
     for i, track in enumerate(results["items"], 1):
+        if not track:
+            continue
         tracks.append({
             "rank": i,
-            "name": track["name"],
-            "artist": ", ".join(a["name"] for a in track["artists"]),
-            "album": track["album"]["name"],
-            "popularity": track["popularity"],
-            "spotify_url": track["external_urls"].get("spotify", ""),
-            "uri": track["uri"],
+            "name": track.get("name", ""),
+            "artist": ", ".join(a.get("name", "") for a in track.get("artists", [])),
+            "album": track.get("album", {}).get("name", ""),
+            "popularity": track.get("popularity", 0),
+            "spotify_url": track.get("external_urls", {}).get("spotify", ""),
+            "uri": track.get("uri", ""),
         })
     return tracks
 
@@ -182,14 +184,16 @@ def fetch_top_artists(sp, time_range="medium_term", log_fn=None):
     artists = []
     results = _api_call_with_retry(sp.current_user_top_artists, limit=50, time_range=time_range, log_fn=log_fn)
     for i, artist in enumerate(results["items"], 1):
+        if not artist:
+            continue
         artists.append({
             "rank": i,
-            "name": artist["name"],
-            "genres": ", ".join(artist["genres"]),
-            "followers": artist["followers"]["total"],
-            "popularity": artist["popularity"],
-            "spotify_url": artist["external_urls"].get("spotify", ""),
-            "uri": artist["uri"],
+            "name": artist.get("name", ""),
+            "genres": ", ".join(artist.get("genres", [])),
+            "followers": artist.get("followers", {}).get("total", 0),
+            "popularity": artist.get("popularity", 0),
+            "spotify_url": artist.get("external_urls", {}).get("spotify", ""),
+            "uri": artist.get("uri", ""),
         })
     return artists
 
@@ -199,13 +203,15 @@ def fetch_followed_artists(sp, log_fn=None):
     results = _api_call_with_retry(sp.current_user_followed_artists, limit=50, log_fn=log_fn)
     while True:
         for artist in results["artists"]["items"]:
+            if not artist:
+                continue
             artists.append({
-                "name": artist["name"],
-                "genres": ", ".join(artist["genres"]),
-                "followers": artist["followers"]["total"],
-                "popularity": artist["popularity"],
-                "spotify_url": artist["external_urls"].get("spotify", ""),
-                "uri": artist["uri"],
+                "name": artist.get("name", ""),
+                "genres": ", ".join(artist.get("genres", [])),
+                "followers": artist.get("followers", {}).get("total", 0),
+                "popularity": artist.get("popularity", 0),
+                "spotify_url": artist.get("external_urls", {}).get("spotify", ""),
+                "uri": artist.get("uri", ""),
             })
         if results["artists"]["cursors"]["after"]:
             results = _api_call_with_retry(
@@ -222,12 +228,14 @@ def fetch_recently_played(sp, log_fn=None):
     tracks = []
     results = _api_call_with_retry(sp.current_user_recently_played, limit=50, log_fn=log_fn)
     for item in results["items"]:
-        track = item["track"]
+        track = item.get("track")
+        if not track:
+            continue
         tracks.append({
-            "name": track["name"],
-            "artist": ", ".join(a["name"] for a in track["artists"]),
-            "album": track["album"]["name"],
-            "played_at": item["played_at"],
+            "name": track.get("name", ""),
+            "artist": ", ".join(a.get("name", "") for a in track.get("artists", [])),
+            "album": track.get("album", {}).get("name", ""),
+            "played_at": item.get("played_at", ""),
             "duration_ms": track["duration_ms"],
             "spotify_url": track["external_urls"].get("spotify", ""),
             "uri": track["uri"],
