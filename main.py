@@ -49,6 +49,19 @@ def get_spotify_client() -> spotipy.Spotify:
         scope=" ".join(SCOPES),
         open_browser=True,
     )
+
+    # Show the auth URL so the user can open it in any browser
+    token_info = auth_manager.cache_handler.get_cached_token()
+    if not token_info or auth_manager.is_token_expired(token_info):
+        auth_url = auth_manager.get_authorize_url()
+        console.print(
+            Panel(
+                f"[bold]Open this URL to authorize Exportify:[/]\n\n[link={auth_url}]{auth_url}[/link]",
+                title="[yellow]Spotify Auth[/yellow]",
+                border_style="yellow",
+            )
+        )
+
     return spotipy.Spotify(auth_manager=auth_manager)
 
 
