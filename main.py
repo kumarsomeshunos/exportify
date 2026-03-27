@@ -410,7 +410,11 @@ class ExportifyApp(App):
                 playlist_tracks_combined = {}
                 for pl in playlists:
                     log(f"    [dim]Fetching: {pl['name'][:50]}...[/]")
-                    tracks = fetch_playlist_tracks(self.sp, pl["id"], log_fn=log)
+                    try:
+                        tracks = fetch_playlist_tracks(self.sp, pl["id"], log_fn=log)
+                    except SpotifyException as e:
+                        log(f"    [yellow]⚠[/] Skipped '{pl['name'][:50]}' ({e.http_status}: access restricted)")
+                        continue
                     safe_name = "".join(c if c.isalnum() or c in " _-" else "_" for c in pl["name"])
                     export_data(tracks, safe_name.strip(), playlists_dir, fmt)
                     playlist_tracks_combined[pl["name"]] = tracks
