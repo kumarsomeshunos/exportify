@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -13,7 +14,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.exceptions import SpotifyException
+from spotipy.oauth2 import SpotifyPKCE
 
 load_dotenv()
 
@@ -29,22 +31,45 @@ SCOPES = [
 ]
 
 
+# Maximum retries for rate-limited or transient server errors
+MAX_RETRIES = 5
+
+
+def _api_call_with_retry(func, *args, **kwargs):
+    """Wrap a Spotify API call with exponential backoff for 429 and 5xx errors."""
+    for attempt in range(MAX_RETRIES):
+        try:
+            return func(*args, **kwargs)
+        except SpotifyException as e:
+            if e.http_status == 429:
+                retry_after = int(e.headers.get("Retry-After", 2 ** attempt)) if e.headers else 2 ** attempt
+                console.print(f"  [yellow]Rate limited. Retrying in {retry_after}s...[/]")
+                time.sleep(retry_after)
+            elif e.http_status >= 500:
+                wait = 2 ** attempt
+                console.print(f"  [yellow]Server error ({e.http_status}). Retrying in {wait}s...[/]")
+                time.sleep(wait)
+            else:
+                raise
+    # Final attempt — let any exception propagate
+    return func(*args, **kwargs)
+
+
 def get_spotify_client() -> spotipy.Spotify:
     client_id = os.getenv("SPOTIPY_CLIENT_ID")
-    client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
     redirect_uri = os.getenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
 
-    if not client_id or not client_secret:
+    if not client_id:
         console.print(
-            "[bold red]Error:[/] SPOTIPY_CLIENT_ID and SPOTIPY_CLIENT_SECRET must be set.\n"
-            "Copy .env.example to .env and fill in your Spotify app credentials.\n"
+            "[bold red]Error:[/] SPOTIPY_CLIENT_ID must be set.\n"
+            "Copy .env.example to .env and fill in your Spotify app Client ID.\n"
             "Create an app at https://developer.spotify.com/dashboard"
         )
         sys.exit(1)
 
-    auth_manager = SpotifyOAuth(
+    # Use Authorization Code with PKCE flow (no client secret needed)
+    auth_manager = SpotifyPKCE(
         client_id=client_id,
-        client_secret=client_secret,
         redirect_uri=redirect_uri,
         scope=" ".join(SCOPES),
         open_browser=True,
@@ -70,10 +95,12 @@ def get_spotify_client() -> spotipy.Spotify:
 
 def fetch_liked_songs(sp: spotipy.Spotify) -> list[dict]:
     songs = []
-    results = sp.current_user_saved_tracks(limit=50)
+    results = _api_call_with_retry(sp.current_user_saved_tracks, limit=50)
     while results:
         for item in results["items"]:
             track = item["track"]
+            if not track:
+                continue
             songs.append({
                 "name": track["name"],
                 "artist": ", ".join(a["name"] for a in track["artists"]),
@@ -83,13 +110,13 @@ def fetch_liked_songs(sp: spotipy.Spotify) -> list[dict]:
                 "spotify_url": track["external_urls"].get("spotify", ""),
                 "uri": track["uri"],
             })
-        results = sp.next(results) if results["next"] else None
+        results = _api_call_with_retry(sp.next, results) if results["next"] else None
     return songs
 
 
 def fetch_playlists(sp: spotipy.Spotify) -> list[dict]:
     playlists = []
-    results = sp.current_user_playlists(limit=50)
+    results = _api_call_with_retry(sp.current_user_playlists, limit=50)
     while results:
         for item in results["items"]:
             playlists.append({
@@ -102,13 +129,14 @@ def fetch_playlists(sp: spotipy.Spotify) -> list[dict]:
                 "spotify_url": item["external_urls"].get("spotify", ""),
                 "uri": item["uri"],
             })
-        results = sp.next(results) if results["next"] else None
+        results = _api_call_with_retry(sp.next, results) if results["next"] else None
     return playlists
 
 
 def fetch_playlist_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[dict]:
     tracks = []
-    results = sp.playlist_items(playlist_id, limit=100)
+    # Uses /playlists/{id}/items (not the deprecated /playlists/{id}/tracks)
+    results = _api_call_with_retry(sp.playlist_items, playlist_id, limit=100)
     while results:
         for item in results["items"]:
             track = item.get("track")
@@ -123,13 +151,13 @@ def fetch_playlist_tracks(sp: spotipy.Spotify, playlist_id: str) -> list[dict]:
                 "spotify_url": track["external_urls"].get("spotify", ""),
                 "uri": track["uri"],
             })
-        results = sp.next(results) if results["next"] else None
+        results = _api_call_with_retry(sp.next, results) if results["next"] else None
     return tracks
 
 
 def fetch_top_tracks(sp: spotipy.Spotify, time_range: str = "medium_term") -> list[dict]:
     tracks = []
-    results = sp.current_user_top_tracks(limit=50, time_range=time_range)
+    results = _api_call_with_retry(sp.current_user_top_tracks, limit=50, time_range=time_range)
     for i, track in enumerate(results["items"], 1):
         tracks.append({
             "rank": i,
@@ -145,7 +173,7 @@ def fetch_top_tracks(sp: spotipy.Spotify, time_range: str = "medium_term") -> li
 
 def fetch_top_artists(sp: spotipy.Spotify, time_range: str = "medium_term") -> list[dict]:
     artists = []
-    results = sp.current_user_top_artists(limit=50, time_range=time_range)
+    results = _api_call_with_retry(sp.current_user_top_artists, limit=50, time_range=time_range)
     for i, artist in enumerate(results["items"], 1):
         artists.append({
             "rank": i,
@@ -161,7 +189,7 @@ def fetch_top_artists(sp: spotipy.Spotify, time_range: str = "medium_term") -> l
 
 def fetch_followed_artists(sp: spotipy.Spotify) -> list[dict]:
     artists = []
-    results = sp.current_user_followed_artists(limit=50)
+    results = _api_call_with_retry(sp.current_user_followed_artists, limit=50)
     while True:
         for artist in results["artists"]["items"]:
             artists.append({
@@ -173,8 +201,9 @@ def fetch_followed_artists(sp: spotipy.Spotify) -> list[dict]:
                 "uri": artist["uri"],
             })
         if results["artists"]["cursors"]["after"]:
-            results = sp.current_user_followed_artists(
-                limit=50, after=results["artists"]["cursors"]["after"]
+            results = _api_call_with_retry(
+                sp.current_user_followed_artists,
+                limit=50, after=results["artists"]["cursors"]["after"],
             )
         else:
             break
@@ -183,7 +212,7 @@ def fetch_followed_artists(sp: spotipy.Spotify) -> list[dict]:
 
 def fetch_recently_played(sp: spotipy.Spotify) -> list[dict]:
     tracks = []
-    results = sp.current_user_recently_played(limit=50)
+    results = _api_call_with_retry(sp.current_user_recently_played, limit=50)
     for item in results["items"]:
         track = item["track"]
         tracks.append({
@@ -295,16 +324,22 @@ def main():
 
     # Verify connection
     try:
-        user = sp.current_user()
-    except spotipy.exceptions.SpotifyException as e:
-        if e.http_status == 403:
+        user = _api_call_with_retry(sp.current_user)
+    except SpotifyException as e:
+        if e.http_status == 401:
+            console.print(
+                "[bold red]Error:[/] Authentication failed (401).\n"
+                "Your token may have expired. Delete the [bold].cache[/] file and try again."
+            )
+        elif e.http_status == 403:
             console.print(
                 "[bold red]Error:[/] Spotify returned 403 Forbidden.\n"
                 "This usually means the app owner needs an active [bold]Spotify Premium[/] subscription.\n"
                 "See: https://developer.spotify.com/documentation/web-api"
             )
-            sys.exit(1)
-        raise
+        else:
+            console.print(f"[bold red]Error:[/] Spotify API error {e.http_status}: {e.msg}")
+        sys.exit(1)
     console.print(f"\n[bold]Logged in as:[/] {user['display_name']} ({user['id']})\n")
 
     combined: dict[str, any] = {}

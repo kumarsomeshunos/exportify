@@ -10,7 +10,7 @@ Export your Spotify data — liked songs, playlists, top tracks, artists, and mo
 2. **Configure credentials**
    ```sh
    cp .env.example .env
-   # Edit .env with your Client ID and Client Secret
+   # Edit .env with your Client ID (no secret needed — uses PKCE flow)
    ```
 
 3. **Install dependencies**
