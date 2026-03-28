@@ -35,15 +35,23 @@ function CallbackHandler() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-        <div className="text-center space-y-4">
-          <div className="text-red-400 text-xl font-semibold">Error</div>
-          <p className="text-zinc-400">{error}</p>
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <div className="text-center space-y-5 max-w-sm">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-[17px] font-semibold text-white/90 mb-2">Something went wrong</h2>
+            <p className="text-[14px] text-white/40 leading-relaxed">{error}</p>
+          </div>
           <a
             href="/"
-            className="inline-block mt-4 px-6 py-2 bg-green-500 text-black font-semibold rounded-full hover:bg-green-400 transition"
+            className="inline-block px-6 h-10 leading-10 bg-white text-black text-[14px] font-semibold
+              rounded-full hover:bg-white/90 transition-all"
           >
-            Try Again
+            Try again
           </a>
         </div>
       </div>
@@ -51,24 +59,26 @@ function CallbackHandler() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="text-center space-y-4">
-        <div className="animate-spin h-8 w-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto" />
-        <p className="text-zinc-400">Authenticating with Spotify...</p>
+        <div className="h-5 w-5 border-[1.5px] border-white/30 border-t-white/80 rounded-full animate-spin mx-auto" />
+        <p className="text-[14px] text-white/40">Authenticating…</p>
       </div>
+    </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="h-5 w-5 border-[1.5px] border-white/30 border-t-white/80 rounded-full animate-spin" />
     </div>
   );
 }
 
 export default function CallbackPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-zinc-950">
-          <div className="animate-spin h-8 w-8 border-2 border-green-500 border-t-transparent rounded-full" />
-        </div>
-      }
-    >
+    <Suspense fallback={<LoadingFallback />}>
       <CallbackHandler />
     </Suspense>
   );

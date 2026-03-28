@@ -16,10 +16,12 @@ function getClientId(): string {
 }
 
 function getRedirectUri(): string {
+  const envUri = process.env.NEXT_PUBLIC_REDIRECT_URI;
+  if (envUri) return envUri;
   if (typeof window !== "undefined") {
     return `${window.location.origin}/callback`;
   }
-  return process.env.NEXT_PUBLIC_REDIRECT_URI || "http://127.0.0.1:3000/callback";
+  return "http://localhost:3000/callback";
 }
 
 // ── PKCE Helpers ──────────────────────────────────────────────
@@ -46,11 +48,19 @@ function base64UrlEncode(buffer: ArrayBuffer): string {
 // ── Auth ──────────────────────────────────────────────────────
 
 export async function redirectToSpotifyAuth(): Promise<void> {
+  // Ensure browser origin matches redirect URI origin to keep localStorage consistent
+  const redirectUri = getRedirectUri();
+  const redirectOrigin = new URL(redirectUri).origin;
+  if (window.location.origin !== redirectOrigin) {
+    window.location.href = redirectOrigin + window.location.pathname;
+    return;
+  }
+
   const codeVerifier = generateRandomString(64);
   const hashed = await sha256(codeVerifier);
   const codeChallenge = base64UrlEncode(hashed);
 
-  sessionStorage.setItem(VERIFIER_KEY, codeVerifier);
+  localStorage.setItem(VERIFIER_KEY, codeVerifier);
 
   const params = new URLSearchParams({
     response_type: "code",
@@ -58,29 +68,40 @@ export async function redirectToSpotifyAuth(): Promise<void> {
     scope: SCOPES.join(" "),
     code_challenge_method: "S256",
     code_challenge: codeChallenge,
-    redirect_uri: getRedirectUri(),
+    redirect_uri: redirectUri,
   });
 
   window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 
 export async function exchangeCodeForToken(code: string): Promise<boolean> {
-  const codeVerifier = sessionStorage.getItem(VERIFIER_KEY);
-  if (!codeVerifier) return false;
+  const codeVerifier = localStorage.getItem(VERIFIER_KEY);
+  if (!codeVerifier) {
+    console.error("[Exportify] No code_verifier found in localStorage");
+    return false;
+  }
+
+  const body = new URLSearchParams({
+    client_id: getClientId(),
+    grant_type: "authorization_code",
+    code,
+    redirect_uri: getRedirectUri(),
+    code_verifier: codeVerifier,
+  });
+
+  console.log("[Exportify] Token exchange redirect_uri:", getRedirectUri());
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: getClientId(),
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: getRedirectUri(),
-      code_verifier: codeVerifier,
-    }),
+    body,
   });
 
-  if (!response.ok) return false;
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("[Exportify] Token exchange failed:", response.status, errorBody);
+    return false;
+  }
 
   const data = await response.json();
   const tokenData = {
@@ -88,13 +109,13 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
     refresh_token: data.refresh_token,
     expires_at: Date.now() + data.expires_in * 1000,
   };
-  sessionStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
-  sessionStorage.removeItem(VERIFIER_KEY);
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
+  localStorage.removeItem(VERIFIER_KEY);
   return true;
 }
 
 async function refreshAccessToken(): Promise<boolean> {
-  const stored = sessionStorage.getItem(TOKEN_KEY);
+  const stored = localStorage.getItem(TOKEN_KEY);
   if (!stored) return false;
 
   const tokenData = JSON.parse(stored);
@@ -116,12 +137,12 @@ async function refreshAccessToken(): Promise<boolean> {
   tokenData.access_token = data.access_token;
   tokenData.expires_at = Date.now() + data.expires_in * 1000;
   if (data.refresh_token) tokenData.refresh_token = data.refresh_token;
-  sessionStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
   return true;
 }
 
 export function getAccessToken(): string | null {
-  const stored = sessionStorage.getItem(TOKEN_KEY);
+  const stored = localStorage.getItem(TOKEN_KEY);
   if (!stored) return null;
   const tokenData = JSON.parse(stored);
   return tokenData.access_token || null;
@@ -132,8 +153,8 @@ export function isAuthenticated(): boolean {
 }
 
 export function logout(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(VERIFIER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(VERIFIER_KEY);
 }
 
 // ── API Calls with retry ─────────────────────────────────────
@@ -146,7 +167,7 @@ async function spotifyFetch(
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     // Refresh token if expired
-    const stored = sessionStorage.getItem(TOKEN_KEY);
+    const stored = localStorage.getItem(TOKEN_KEY);
     if (stored) {
       const tokenData = JSON.parse(stored);
       if (Date.now() >= tokenData.expires_at - 60000) {
@@ -318,7 +339,7 @@ export async function fetchPlaylistTracks(
 ): Promise<TrackItem[]> {
   const marketParam = market ? `&market=${market}` : "";
   const items = await fetchAllPages(
-    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/tracks?limit=100&additional_types=track${marketParam}`,
+    `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/items?limit=100&additional_types=track${marketParam}`,
     log
   );
   return items.map((item) => parseTrack(item)!).filter(Boolean);
