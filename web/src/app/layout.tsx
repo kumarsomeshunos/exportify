@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     description:
       "Export your Spotify liked songs, playlists, top tracks, and more as JSON or CSV. Free and open-source.",
     type: "website",
-    url: "https://github.com/kumarsomeshunos/exportify",
+    url: "https://exportify.kumarsomesh.com",
   },
   twitter: {
     card: "summary",

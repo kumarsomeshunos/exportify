@@ -5,6 +5,8 @@
 
 Export your Spotify data — liked songs, playlists, top tracks, artists, and more — to JSON or CSV. Available as a **web app** (runs in your browser) and a **CLI** (interactive terminal UI).
 
+**Try it now at [exportify.kumarsomesh.com](https://exportify.kumarsomesh.com)**
+
 **No backend server. No data collection. Everything runs locally.**
 
 **Both apps guide you through setup** — just run the app and follow the prompts. No manual config files needed.
@@ -36,7 +38,7 @@ Both the web and CLI apps need a Spotify Developer app. You only need to do this
    - **App description**: Anything
    - **Redirect URIs**: Add these:
      - `http://127.0.0.1:8888/callback` (for local development)
-     - Your production URL + `/callback` (if deploying, e.g. `https://yourdomain.com/callback`)
+     - `https://exportify.kumarsomesh.com/callback` (for the hosted version)
    - **APIs used**: Select **Web API**
 5. Click **Save**
 6. Go to your app's **Settings** and copy the **Client ID**
@@ -85,7 +87,7 @@ If set, the env var takes priority over the browser-stored Client ID.
 To deploy (e.g. on Vercel), update `NEXT_PUBLIC_REDIRECT_URI` to match your production domain:
 
 ```
-NEXT_PUBLIC_REDIRECT_URI=https://yourdomain.com/callback
+NEXT_PUBLIC_REDIRECT_URI=https://exportify.kumarsomesh.com/callback
 ```
 
 Make sure this same URI is added in your Spotify app's redirect URIs.
