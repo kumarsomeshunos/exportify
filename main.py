@@ -39,6 +39,7 @@ SCOPES = [
     "user-top-read",
     "user-read-recently-played",
     "user-follow-read",
+    "user-read-private",
 ]
 
 MAX_RETRIES = 5
@@ -141,13 +142,14 @@ def fetch_playlists(sp, log_fn=None):
     return playlists
 
 
-def fetch_playlist_tracks(sp, playlist_id, log_fn=None):
+def fetch_playlist_tracks(sp, playlist_id, market=None, log_fn=None):
     tracks = []
-    # market="from_token" ensures tracks are returned with full details for the user's region
     results = _api_call_with_retry(
         sp.playlist_items, playlist_id, limit=100,
-        additional_types=["track"], market="from_token", log_fn=log_fn,
+        additional_types=["track"], market=market, log_fn=log_fn,
     )
+    if log_fn and results:
+        log_fn(f"      [dim](API returned {results.get('total', 0)} total items)[/]")
     while results:
         for item in results["items"]:
             track = item.get("track")
@@ -418,12 +420,18 @@ class ExportifyApp(App):
                 export_data(playlists, "playlists", out_dir, fmt)
                 log(f"  [green]✓[/] Playlists: [bold]{len(playlists)}[/]")
 
+                # Get user's country for market parameter
+                user_market = self.user_info.get("country")
+                if user_market:
+                    log(f"    [dim]Using market: {user_market}[/]")
+
                 playlists_dir = out_dir / "playlists"
                 playlist_tracks_combined = {}
                 for pl in playlists:
-                    log(f"    [dim]Fetching: {pl['name'][:50]}...[/]")
+                    total = pl.get('total_tracks', '?')
+                    log(f"    [dim]Fetching: {pl['name'][:50]} (listed: {total} tracks)...[/]")
                     try:
-                        tracks = fetch_playlist_tracks(self.sp, pl["id"], log_fn=log)
+                        tracks = fetch_playlist_tracks(self.sp, pl["id"], market=user_market, log_fn=log)
                     except SpotifyException as e:
                         log(f"    [yellow]⚠[/] Skipped '{pl['name'][:50]}' ({e.http_status}: access restricted)")
                         continue
