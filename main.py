@@ -143,20 +143,24 @@ def fetch_playlists(sp, log_fn=None):
 
 def fetch_playlist_tracks(sp, playlist_id, log_fn=None):
     tracks = []
-    results = _api_call_with_retry(sp.playlist_items, playlist_id, limit=100, log_fn=log_fn)
+    # market="from_token" ensures tracks are returned with full details for the user's region
+    results = _api_call_with_retry(
+        sp.playlist_items, playlist_id, limit=100,
+        additional_types=["track"], market="from_token", log_fn=log_fn,
+    )
     while results:
         for item in results["items"]:
             track = item.get("track")
             if not track:
                 continue
             tracks.append({
-                "name": track["name"],
-                "artist": ", ".join(a["name"] for a in track["artists"]),
-                "album": track["album"]["name"],
+                "name": track.get("name", ""),
+                "artist": ", ".join(a.get("name", "") for a in track.get("artists", [])),
+                "album": track.get("album", {}).get("name", ""),
                 "added_at": item.get("added_at", ""),
-                "duration_ms": track["duration_ms"],
-                "spotify_url": track["external_urls"].get("spotify", ""),
-                "uri": track["uri"],
+                "duration_ms": track.get("duration_ms", 0),
+                "spotify_url": track.get("external_urls", {}).get("spotify", ""),
+                "uri": track.get("uri", ""),
             })
         results = _api_call_with_retry(sp.next, results, log_fn=log_fn) if results["next"] else None
     return tracks
