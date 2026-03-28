@@ -217,8 +217,8 @@ export default function ExportPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-5 w-5 border-[1.5px] border-white/30 border-t-white/80 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="h-5 w-5 border-2 border-neutral-700 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
@@ -226,157 +226,130 @@ export default function ExportPage() {
   const progressPercent = totalSteps > 0 ? (progress / totalSteps) * 100 : 0;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       {/* Header */}
-      <header className="fixed top-0 w-full z-50 backdrop-blur-xl bg-black/70 border-b border-white/[0.04]">
-        <div className="max-w-3xl mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-[13px] font-semibold tracking-tight text-white/90">Exportify</span>
-            <span className="text-white/10">·</span>
-            <span className="text-[13px] text-white/40">{user.display_name}</span>
+      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-neutral-800/50">
+        <div className="max-w-xl mx-auto px-5 h-11 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">Exportify</span>
+            <span className="text-neutral-600 text-xs">·</span>
+            <span className="text-sm text-neutral-500">{user.display_name}</span>
           </div>
           <button
             onClick={handleLogout}
-            className="text-[13px] text-white/30 hover:text-white/60 transition-colors cursor-pointer"
+            className="text-xs text-neutral-500 hover:text-neutral-300 transition cursor-pointer"
           >
             Sign out
           </button>
         </div>
       </header>
 
-      <main className="flex-1 pt-20 pb-16 px-6">
-        <div className="max-w-3xl mx-auto">
-          {/* Title */}
-          <div className="mb-8">
-            <h1 className="text-[24px] font-semibold tracking-tight mb-1">Export your data</h1>
-            <p className="text-[14px] text-white/35">Choose categories, pick a format, and download.</p>
-          </div>
+      <main className="flex-1 pt-8 pb-16 px-5">
+        <div className="max-w-xl mx-auto">
+          <h1 className="text-xl font-semibold tracking-tight mb-6">Export</h1>
 
           {/* Categories */}
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[11px] font-medium uppercase tracking-[0.1em] text-white/25">
-                Categories
-              </h2>
-              <div className="flex gap-2">
-                <button onClick={selectAll} className="text-[11px] text-white/25 hover:text-white/50 transition-colors cursor-pointer">
-                  All
-                </button>
-                <button onClick={selectNone} className="text-[11px] text-white/25 hover:text-white/50 transition-colors cursor-pointer">
-                  None
-                </button>
+          <div className="mb-6">
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="text-xs text-neutral-500 uppercase tracking-wider">Categories</span>
+              <div className="flex gap-3">
+                <button onClick={selectAll} className="text-xs text-neutral-500 hover:text-white transition cursor-pointer">All</button>
+                <button onClick={selectNone} className="text-xs text-neutral-500 hover:text-white transition cursor-pointer">None</button>
               </div>
             </div>
-            <div className="rounded-xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.04]">
+            <div className="rounded-lg bg-neutral-900 divide-y divide-neutral-800">
               {CATEGORIES.map(({ key, label, icon }) => {
-                const active = selected.has(key);
+                const on = selected.has(key);
                 return (
                   <button
                     key={key}
                     onClick={() => toggleCategory(key)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left
-                      hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-800/50 transition cursor-pointer"
                   >
-                    <span className="text-[15px] leading-none">{icon}</span>
-                    <span className={`text-[14px] flex-1 ${active ? "text-white/85" : "text-white/30"}`}>
-                      {label}
-                    </span>
-                    <span
-                      className={`w-[18px] h-[18px] rounded-full border flex items-center justify-center transition-all shrink-0
-                        ${active
-                          ? "bg-[#1ed760] border-[#1ed760]"
-                          : "border-white/15 bg-transparent"
-                        }`}
-                    >
-                      {active && (
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none" className="text-black">
-                          <path d="M2.5 6.5L5 9L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </span>
+                    <span className="text-sm">{icon}</span>
+                    <span className={`text-sm flex-1 ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
+                    {on && (
+                      <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
                   </button>
                 );
               })}
             </div>
-          </section>
+          </div>
 
-          {/* Format + Export */}
-          <section className="mb-8 flex items-center gap-3">
-            <div className="flex bg-white/[0.04] rounded-lg p-0.5">
+          {/* Format */}
+          <div className="mb-6">
+            <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-2">Format</span>
+            <div className="inline-flex bg-neutral-900 rounded-lg p-1 gap-1">
               {(["json", "csv"] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
-                  className={`px-4 py-1.5 rounded-md text-[12px] font-medium uppercase tracking-wide
-                    transition-all duration-150 cursor-pointer
-                    ${format === f
-                      ? "bg-white/[0.1] text-white/85"
-                      : "text-white/25 hover:text-white/45"
-                    }`}
+                  className={`px-5 py-1.5 rounded-md text-xs font-medium uppercase tracking-wider transition cursor-pointer
+                    ${format === f ? "bg-neutral-700 text-white" : "text-neutral-500 hover:text-neutral-300"}`}
                 >
                   {f}
                 </button>
               ))}
             </div>
-            <button
-              onClick={handleExport}
-              disabled={exporting || selected.size === 0}
-              className="flex-1 h-9 bg-white text-black text-[13px] font-semibold rounded-lg
-                hover:bg-white/90 active:scale-[0.99]
-                disabled:bg-white/[0.05] disabled:text-white/15 disabled:cursor-not-allowed
-                transition-all duration-150 cursor-pointer"
-            >
-              {exporting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-3.5 w-3.5 border-[1.5px] border-black/25 border-t-black/70 rounded-full animate-spin" />
-                  Exporting…
-                </span>
-              ) : (
-                "Export"
-              )}
-            </button>
-          </section>
+          </div>
 
-          {/* Activity log */}
+          {/* Export */}
+          <button
+            onClick={handleExport}
+            disabled={exporting || selected.size === 0}
+            className="w-full h-11 bg-white text-black text-sm font-semibold rounded-lg
+              hover:bg-neutral-200 active:bg-neutral-300
+              disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed
+              transition cursor-pointer mb-8"
+          >
+            {exporting ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="h-3.5 w-3.5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
+                Exporting…
+              </span>
+            ) : (
+              "Export"
+            )}
+          </button>
+
+          {/* Activity */}
           {(logs.length > 0 || totalSteps > 0) && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[11px] font-medium uppercase tracking-[0.1em] text-white/25">
-                  Activity
-                </h2>
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-xs text-neutral-500 uppercase tracking-wider">Activity</span>
                 {totalSteps > 0 && (
-                  <span className="text-[11px] tabular-nums text-white/20">
-                    {progress}/{totalSteps}
-                  </span>
+                  <span className="text-xs text-neutral-600 tabular-nums">{progress}/{totalSteps}</span>
                 )}
               </div>
 
               {totalSteps > 0 && (
-                <div className="w-full h-[3px] bg-white/[0.06] rounded-full overflow-hidden mb-4">
+                <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mb-3">
                   <div
-                    className="h-full bg-[#1ed760] rounded-full transition-all duration-500 ease-out"
+                    className="h-full bg-green-500 rounded-full transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               )}
 
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 overflow-y-auto max-h-[360px] space-y-0.5">
+              <div className="bg-neutral-900 rounded-lg p-4 max-h-80 overflow-y-auto space-y-0.5 font-mono">
                 {logs.map((entry) => (
                   <div
                     key={entry.id}
-                    className={`text-[12px] leading-[1.6] font-mono
-                      ${entry.type === "success" ? "text-[#1ed760]/70"
-                        : entry.type === "error" ? "text-red-400/70"
-                        : entry.type === "warn" ? "text-amber-400/60"
-                        : "text-white/25"
-                      }`}
+                    className={`text-xs leading-relaxed
+                      ${entry.type === "success" ? "text-green-500"
+                        : entry.type === "error" ? "text-red-400"
+                        : entry.type === "warn" ? "text-amber-400"
+                        : "text-neutral-500"}`}
                   >
                     {entry.message}
                   </div>
                 ))}
                 <div ref={logEndRef} />
               </div>
-            </section>
+            </div>
           )}
         </div>
       </main>

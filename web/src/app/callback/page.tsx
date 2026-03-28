@@ -35,21 +35,18 @@ function CallbackHandler() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
-        <div className="text-center space-y-5 max-w-sm">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <div className="min-h-screen flex items-center justify-center bg-black px-6">
+        <div className="text-center max-w-xs">
+          <div className="w-10 h-10 rounded-full bg-red-900/40 flex items-center justify-center mx-auto mb-4">
+            <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <div>
-            <h2 className="text-[17px] font-semibold text-white/90 mb-2">Something went wrong</h2>
-            <p className="text-[14px] text-white/40 leading-relaxed">{error}</p>
-          </div>
+          <h2 className="text-base font-semibold text-white mb-1">Something went wrong</h2>
+          <p className="text-sm text-neutral-500 mb-5 leading-relaxed">{error}</p>
           <a
             href="/"
-            className="inline-block px-6 h-10 leading-10 bg-white text-black text-[14px] font-semibold
-              rounded-full hover:bg-white/90 transition-all"
+            className="inline-block px-5 h-9 leading-9 bg-white text-black text-sm font-semibold rounded-full hover:bg-neutral-200 transition"
           >
             Try again
           </a>
@@ -59,10 +56,10 @@ function CallbackHandler() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <div className="h-5 w-5 border-[1.5px] border-white/30 border-t-white/80 rounded-full animate-spin mx-auto" />
-        <p className="text-[14px] text-white/40">Authenticating…</p>
+    <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="text-center space-y-3">
+        <div className="h-5 w-5 border-2 border-neutral-700 border-t-white rounded-full animate-spin mx-auto" />
+        <p className="text-sm text-neutral-500">Authenticating…</p>
       </div>
     </div>
   );
@@ -70,8 +67,8 @@ function CallbackHandler() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="h-5 w-5 border-[1.5px] border-white/30 border-t-white/80 rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className="h-5 w-5 border-2 border-neutral-700 border-t-white rounded-full animate-spin" />
     </div>
   );
 }
