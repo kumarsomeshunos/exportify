@@ -429,8 +429,7 @@ class ExportifyApp(App):
                 playlists_dir = out_dir / "playlists"
                 playlist_tracks_combined = {}
                 for pl in playlists:
-                    total = pl.get('total_tracks', '?')
-                    log(f"    [dim]Fetching: {pl['name'][:50]} (listed: {total} tracks)...[/]")
+                    log(f"    [dim]Fetching: {pl['name'][:50]}...[/]")
                     try:
                         tracks = fetch_playlist_tracks(self.sp, pl["id"], market=user_market, log_fn=log)
                     except SpotifyException as e:
