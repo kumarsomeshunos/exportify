@@ -264,7 +264,8 @@ export interface ArtistItem {
 }
 
 function parseTrack(item: Record<string, unknown>, addedKey = "added_at"): TrackItem | null {
-  const track = item.track as Record<string, unknown> | null;
+  // The /items endpoint returns track data under "item", /tracks uses "track"
+  const track = (item.track ?? item.item) as Record<string, unknown> | null;
   if (!track) return null;
   const artists = (track.artists as Record<string, unknown>[]) || [];
   const album = (track.album as Record<string, unknown>) || {};

@@ -152,7 +152,8 @@ def fetch_playlist_tracks(sp, playlist_id, market=None, log_fn=None):
         log_fn(f"      [dim](API returned {results.get('total', 0)} total items)[/]")
     while results:
         for item in results["items"]:
-            track = item.get("track")
+            # The /items endpoint returns track data under "item", not "track"
+            track = item.get("track") or item.get("item")
             if not track:
                 continue
             tracks.append({
