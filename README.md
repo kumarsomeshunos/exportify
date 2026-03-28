@@ -7,6 +7,8 @@ Export your Spotify data — liked songs, playlists, top tracks, artists, and mo
 
 **No backend server. No data collection. Everything runs locally.**
 
+**Both apps guide you through setup** — just run the app and follow the prompts. No manual config files needed.
+
 ## What You Can Export
 
 | Category | Details |
@@ -56,24 +58,27 @@ The web app runs entirely in your browser. No server-side processing.
 
 ```sh
 cd web
-cp .env.local.example .env.local
+npm install
+npm run dev
 ```
 
-Edit `web/.env.local` with your Spotify Client ID:
+Open [http://127.0.0.1:8888](http://127.0.0.1:8888) — the app walks you through creating a Spotify app and entering your Client ID. Everything is stored in your browser.
+
+### Advanced: Environment Variables
+
+Self-hosters can optionally pre-configure credentials via `web/.env.local`:
+
+```sh
+cp .env.local.example .env.local
+# Edit with your Client ID and redirect URI
+```
 
 ```
 NEXT_PUBLIC_SPOTIFY_CLIENT_ID=your_client_id_here
 NEXT_PUBLIC_REDIRECT_URI=http://127.0.0.1:8888/callback
 ```
 
-Then install and run:
-
-```sh
-npm install
-npm run dev
-```
-
-Open [http://127.0.0.1:8888](http://127.0.0.1:8888) in your browser.
+If set, the env var takes priority over the browser-stored Client ID.
 
 ### Deploying
 
@@ -103,24 +108,27 @@ An interactive terminal UI built with [Textual](https://textual.textualize.io/).
 ### Quick Start
 
 ```sh
-cp .env.example .env
+uv sync
+uv run exportify
 ```
 
-Edit `.env` with your Spotify Client ID:
+On first run, the app walks you through creating a Spotify app and entering your Client ID. It saves the credentials to `.env` automatically so you only need to do this once.
+
+After setup, a browser window opens for Spotify authorization, then the TUI launches.
+
+### Advanced: Manual Config
+
+You can also configure credentials manually:
+
+```sh
+cp .env.example .env
+# Edit with your Client ID
+```
 
 ```
 SPOTIPY_CLIENT_ID=your_client_id_here
 SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
 ```
-
-Then install and run:
-
-```sh
-uv sync
-uv run exportify
-```
-
-On first run, a browser window opens for Spotify authorization. After authorizing, the TUI launches.
 
 ### Keyboard Shortcuts
 

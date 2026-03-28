@@ -10,9 +10,29 @@ const SCOPES = [
 
 const TOKEN_KEY = "exportify_token";
 const VERIFIER_KEY = "exportify_code_verifier";
+const CLIENT_ID_KEY = "exportify_client_id";
 
 function getClientId(): string {
-  return process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || "";
+  // Env var takes priority (for self-hosters), then localStorage (for visitors)
+  const envId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
+  if (envId) return envId;
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(CLIENT_ID_KEY) || "";
+  }
+  return "";
+}
+
+export function getStoredClientId(): string {
+  if (typeof window === "undefined") return "";
+  return process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID || localStorage.getItem(CLIENT_ID_KEY) || "";
+}
+
+export function saveClientId(clientId: string): void {
+  localStorage.setItem(CLIENT_ID_KEY, clientId.trim());
+}
+
+export function clearClientId(): void {
+  localStorage.removeItem(CLIENT_ID_KEY);
 }
 
 function getRedirectUri(): string {
@@ -22,6 +42,10 @@ function getRedirectUri(): string {
     return `${window.location.origin}/callback`;
   }
   return "http://localhost:3000/callback";
+}
+
+export function getConfiguredRedirectUri(): string {
+  return getRedirectUri();
 }
 
 // ── PKCE Helpers ──────────────────────────────────────────────

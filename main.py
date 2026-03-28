@@ -68,28 +68,64 @@ def _api_call_with_retry(func, *args, log_fn=None, **kwargs):
     return func(*args, **kwargs)
 
 
+def _interactive_setup() -> str:
+    """Guide the user through first-time setup and return the Client ID."""
+    print(
+        "\n  ╔══════════════════════════════════════════╗\n"
+        "  ║     Exportify — First-Time Setup         ║\n"
+        "  ╚══════════════════════════════════════════╝\n"
+    )
+    print("  No Spotify Client ID found. Let's set one up!\n")
+    print("  Step 1: Open the Spotify Developer Dashboard")
+    print("          https://developer.spotify.com/dashboard\n")
+    print('  Step 2: Click "Create App"')
+    print("          - Name: anything (e.g. Exportify)")
+    print("          - Description: anything")
+    print("          - Redirect URI: http://127.0.0.1:8888/callback")
+    print('          - APIs used: select "Web API"')
+    print("          - Click Save\n")
+    print("  Step 3: Go to Settings and copy your Client ID\n")
+    print("  No client secret is needed — Exportify uses the PKCE flow.\n")
+
+    while True:
+        try:
+            client_id = input("  Paste your Client ID here: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Setup cancelled.")
+            sys.exit(0)
+        if len(client_id) >= 10 and client_id.isalnum():
+            break
+        print("  That doesn't look right — Client IDs are 32 hex characters. Try again.\n")
+
+    # Save to .env so they don't have to enter it again
+    env_path = Path(".env")
+    redirect_uri = "http://127.0.0.1:8888/callback"
+
+    if env_path.exists():
+        content = env_path.read_text(encoding="utf-8")
+        if "SPOTIPY_CLIENT_ID" not in content:
+            with open(env_path, "a", encoding="utf-8") as f:
+                f.write(f"\nSPOTIPY_CLIENT_ID={client_id}\n")
+    else:
+        env_path.write_text(
+            f"SPOTIPY_CLIENT_ID={client_id}\n"
+            f"SPOTIPY_REDIRECT_URI={redirect_uri}\n",
+            encoding="utf-8",
+        )
+
+    os.environ["SPOTIPY_CLIENT_ID"] = client_id
+    print(f"\n  ✓ Saved to {env_path.resolve()}")
+    print("  You won't need to enter this again.\n")
+    return client_id
+
+
 def get_spotify_client() -> spotipy.Spotify:
     client_id = os.getenv("SPOTIPY_CLIENT_ID")
     redirect_uri = os.getenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
 
     if not client_id:
-        print(
-            "\n  Exportify — Spotify Data Exporter\n"
-            "  ─────────────────────────────────\n\n"
-            "  SPOTIPY_CLIENT_ID is not set. To fix this:\n\n"
-            "  1. Go to https://developer.spotify.com/dashboard\n"
-            "  2. Log in and click 'Create App'\n"
-            "  3. Set the Redirect URI to: http://127.0.0.1:8888/callback\n"
-            "  4. Under 'APIs used', select 'Web API'\n"
-            "  5. Save, then go to Settings and copy the Client ID\n"
-            "  6. Create a .env file:\n\n"
-            "       cp .env.example .env\n\n"
-            "  7. Paste your Client ID into the .env file:\n\n"
-            "       SPOTIPY_CLIENT_ID=your_client_id_here\n"
-            "       SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback\n\n"
-            "  No client secret is needed — Exportify uses the PKCE auth flow.\n"
-        )
-        sys.exit(1)
+        client_id = _interactive_setup()
+        redirect_uri = os.getenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
 
     auth_manager = SpotifyPKCE(
         client_id=client_id,

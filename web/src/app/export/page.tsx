@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   isAuthenticated,
   logout,
+  clearClientId,
   fetchCurrentUser,
   fetchLikedSongs,
   fetchPlaylists,
@@ -215,6 +216,12 @@ export default function ExportPage() {
     router.replace("/");
   };
 
+  const handleFullReset = () => {
+    logout();
+    clearClientId();
+    router.replace("/");
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -235,12 +242,20 @@ export default function ExportPage() {
             <span className="text-neutral-600 text-xs">·</span>
             <span className="text-sm text-neutral-500">{user.display_name}</span>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-neutral-500 hover:text-neutral-300 transition cursor-pointer"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleFullReset}
+              className="text-xs text-neutral-600 hover:text-neutral-400 transition cursor-pointer"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition cursor-pointer"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
