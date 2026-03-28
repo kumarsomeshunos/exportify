@@ -13,7 +13,7 @@ wheels/
 .env
 
 # Exported data
-export/
+/export/
 
 # Spotify auth cache
 .cache
