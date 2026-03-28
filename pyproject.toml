@@ -3,13 +3,22 @@ name = "exportify"
 version = "0.1.0"
 description = "Export your Spotify data — liked songs, playlists, top tracks, artists, and more."
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.13"
+authors = [
+    { name = "Somesh Kumar", email = "kumarsomesh.unos@gmail.com" },
+]
 dependencies = [
     "python-dotenv>=1.2.2",
     "rich>=14.3.3",
     "spotipy>=2.26.0",
     "textual>=8.2.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/kumarsomeshunos/exportify"
+Repository = "https://github.com/kumarsomeshunos/exportify"
+Issues = "https://github.com/kumarsomeshunos/exportify/issues"
 
 [project.scripts]
 exportify = "main:main"

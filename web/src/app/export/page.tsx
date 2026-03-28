@@ -19,12 +19,12 @@ import {
 import { downloadJSON, downloadCSV } from "@/lib/export";
 
 const CATEGORIES = [
-  { key: "liked_songs", label: "Liked Songs", icon: "❤️" },
-  { key: "playlists", label: "Playlists & Tracks", icon: "📋" },
-  { key: "top_tracks", label: "Top Tracks", icon: "🎵" },
-  { key: "top_artists", label: "Top Artists", icon: "🎤" },
-  { key: "followed_artists", label: "Followed Artists", icon: "👥" },
-  { key: "recently_played", label: "Recently Played", icon: "🕐" },
+  { key: "liked_songs", label: "Liked Songs", icon: "❤️", desc: "All your saved tracks" },
+  { key: "playlists", label: "Playlists & Tracks", icon: "📋", desc: "Every playlist with full track listings" },
+  { key: "top_tracks", label: "Top Tracks", icon: "🎵", desc: "Short, medium & all-time rankings" },
+  { key: "top_artists", label: "Top Artists", icon: "🎤", desc: "Short, medium & all-time rankings" },
+  { key: "followed_artists", label: "Followed Artists", icon: "👥", desc: "Artists you follow" },
+  { key: "recently_played", label: "Recently Played", icon: "🕐", desc: "Last 50 played tracks" },
 ];
 
 interface LogEntry {
@@ -258,7 +258,7 @@ export default function ExportPage() {
               </div>
             </div>
             <div className="rounded-lg bg-neutral-900 divide-y divide-neutral-800">
-              {CATEGORIES.map(({ key, label, icon }) => {
+              {CATEGORIES.map(({ key, label, icon, desc }) => {
                 const on = selected.has(key);
                 return (
                   <button
@@ -267,7 +267,10 @@ export default function ExportPage() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-800/50 transition cursor-pointer"
                   >
                     <span className="text-sm">{icon}</span>
-                    <span className={`text-sm flex-1 ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-sm block ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
+                      <span className="text-xs text-neutral-600 block">{desc}</span>
+                    </div>
                     {on && (
                       <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />

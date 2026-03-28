@@ -74,9 +74,20 @@ def get_spotify_client() -> spotipy.Spotify:
 
     if not client_id:
         print(
-            "Error: SPOTIPY_CLIENT_ID must be set.\n"
-            "Copy .env.example to .env and fill in your Spotify app Client ID.\n"
-            "Create an app at https://developer.spotify.com/dashboard"
+            "\n  Exportify — Spotify Data Exporter\n"
+            "  ─────────────────────────────────\n\n"
+            "  SPOTIPY_CLIENT_ID is not set. To fix this:\n\n"
+            "  1. Go to https://developer.spotify.com/dashboard\n"
+            "  2. Log in and click 'Create App'\n"
+            "  3. Set the Redirect URI to: http://127.0.0.1:8888/callback\n"
+            "  4. Under 'APIs used', select 'Web API'\n"
+            "  5. Save, then go to Settings and copy the Client ID\n"
+            "  6. Create a .env file:\n\n"
+            "       cp .env.example .env\n\n"
+            "  7. Paste your Client ID into the .env file:\n\n"
+            "       SPOTIPY_CLIENT_ID=your_client_id_here\n"
+            "       SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback\n\n"
+            "  No client secret is needed — Exportify uses the PKCE auth flow.\n"
         )
         sys.exit(1)
 

@@ -13,6 +13,30 @@ const FEATURES = [
   { icon: "🕐", title: "Recently Played", desc: "Last 50 tracks" },
 ];
 
+const SETUP_STEPS = [
+  {
+    title: "Create a Spotify App",
+    content:
+      'Go to the Spotify Developer Dashboard, click "Create App", and fill in any name and description. Under APIs used, select Web API.',
+    link: "https://developer.spotify.com/dashboard",
+    linkLabel: "Open Dashboard",
+  },
+  {
+    title: "Set Redirect URI",
+    content:
+      "In your app's Settings, add a redirect URI. For local development use http://127.0.0.1:8888/callback — for production, use your domain + /callback.",
+  },
+  {
+    title: "Copy Client ID",
+    content:
+      'In your app\'s Settings, copy the Client ID. Create a .env.local file in the web/ folder with: NEXT_PUBLIC_SPOTIFY_CLIENT_ID=your_id_here and NEXT_PUBLIC_REDIRECT_URI=http://127.0.0.1:8888/callback',
+  },
+  {
+    title: "Install & Run",
+    content: "Run npm install && npm run dev in the web/ folder, then open http://127.0.0.1:8888 in your browser.",
+  },
+];
+
 export default function HomePage() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -104,10 +128,54 @@ export default function HomePage() {
             ))}
           </div>
         </div>
+        {/* Self-host Setup */}
+        <div className="max-w-lg w-full mt-16">
+          <span className="text-xs text-neutral-600 uppercase tracking-wider block text-center mb-6">
+            Self-host Setup
+          </span>
+          <div className="space-y-3">
+            {SETUP_STEPS.map((step, i) => (
+              <div key={i} className="bg-neutral-900 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-neutral-800 text-neutral-400 text-xs font-medium flex items-center justify-center shrink-0 mt-0.5">
+                    {i + 1}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium mb-1">{step.title}</div>
+                    <p className="text-xs text-neutral-500 leading-relaxed">
+                      {step.content}
+                    </p>
+                    {step.link && (
+                      <a
+                        href={step.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-2 text-xs text-green-500 hover:text-green-400 transition"
+                      >
+                        {step.linkLabel} →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
 
       <footer className="border-t border-neutral-800/50 py-5 text-center">
-        <p className="text-xs text-neutral-600">Open source · Runs in your browser</p>
+        <p className="text-xs text-neutral-600">
+          Open source ·{" "}
+          <a
+            href="https://github.com/kumarsomeshunos/exportify"
+            className="text-neutral-500 hover:text-neutral-300 transition"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>{" "}
+          · MIT License
+        </p>
       </footer>
     </div>
   );

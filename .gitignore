@@ -17,3 +17,7 @@ wheels/
 
 # Spotify auth cache
 .cache
+
+# AI assistant config
+AGENTS.md
+CLAUDE.md

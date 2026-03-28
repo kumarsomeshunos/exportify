@@ -11,6 +11,22 @@ export const metadata: Metadata = {
   title: "Exportify — Export Your Spotify Data",
   description:
     "Export your Spotify liked songs, playlists, top tracks, top artists, and more as JSON or CSV. Free, open-source, and runs entirely in your browser.",
+  icons: {
+    icon: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Exportify — Export Your Spotify Data",
+    description:
+      "Export your Spotify liked songs, playlists, top tracks, and more as JSON or CSV. Free and open-source.",
+    type: "website",
+    url: "https://github.com/kumarsomeshunos/exportify",
+  },
+  twitter: {
+    card: "summary",
+    title: "Exportify — Export Your Spotify Data",
+    description:
+      "Export your Spotify liked songs, playlists, top tracks, and more as JSON or CSV. Free and open-source.",
+  },
 };
 
 export default function RootLayout({
