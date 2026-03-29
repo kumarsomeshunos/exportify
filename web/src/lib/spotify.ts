@@ -8,6 +8,14 @@ const SCOPES = [
   "user-read-private",
 ];
 
+const VALID_TIME_RANGES = new Set(["short_term", "medium_term", "long_term"]);
+const SPOTIFY_ID_PATTERN = /^[a-zA-Z0-9]{22,}$/;
+const ISO_COUNTRY_PATTERN = /^[A-Z]{2}$/;
+
+function isDev(): boolean {
+  return process.env.NODE_ENV === "development";
+}
+
 const TOKEN_KEY = "exportify_token";
 const VERIFIER_KEY = "exportify_code_verifier";
 const CLIENT_ID_KEY = "exportify_client_id";
@@ -101,7 +109,7 @@ export async function redirectToSpotifyAuth(): Promise<void> {
 export async function exchangeCodeForToken(code: string): Promise<boolean> {
   const codeVerifier = localStorage.getItem(VERIFIER_KEY);
   if (!codeVerifier) {
-    console.error("[Exportify] No code_verifier found in localStorage");
+    if (isDev()) console.error("[Exportify] No code_verifier found in localStorage");
     return false;
   }
 
@@ -113,7 +121,7 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
     code_verifier: codeVerifier,
   });
 
-  console.log("[Exportify] Token exchange redirect_uri:", getRedirectUri());
+  if (isDev()) console.log("[Exportify] Token exchange redirect_uri:", getRedirectUri());
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -122,8 +130,10 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("[Exportify] Token exchange failed:", response.status, errorBody);
+    if (isDev()) {
+      const errorBody = await response.text();
+      console.error("[Exportify] Token exchange failed:", response.status, errorBody);
+    }
     return false;
   }
 
@@ -361,7 +371,10 @@ export async function fetchPlaylistTracks(
   market?: string,
   log?: LogFn
 ): Promise<TrackItem[]> {
-  const marketParam = market ? `&market=${market}` : "";
+  if (!SPOTIFY_ID_PATTERN.test(playlistId)) {
+    throw new Error(`Invalid playlist ID format`);
+  }
+  const marketParam = market && ISO_COUNTRY_PATTERN.test(market) ? `&market=${market}` : "";
   const items = await fetchAllPages(
     `https://api.spotify.com/v1/playlists/${encodeURIComponent(playlistId)}/items?limit=100&additional_types=track${marketParam}`,
     log
@@ -373,6 +386,9 @@ export async function fetchTopTracks(
   timeRange: string,
   log?: LogFn
 ): Promise<TrackItem[]> {
+  if (!VALID_TIME_RANGES.has(timeRange)) {
+    throw new Error(`Invalid time range: ${timeRange}`);
+  }
   const data = await spotifyGet(
     `https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=${timeRange}`,
     log
@@ -399,6 +415,9 @@ export async function fetchTopArtists(
   timeRange: string,
   log?: LogFn
 ): Promise<ArtistItem[]> {
+  if (!VALID_TIME_RANGES.has(timeRange)) {
+    throw new Error(`Invalid time range: ${timeRange}`);
+  }
   const data = await spotifyGet(
     `https://api.spotify.com/v1/me/top/artists?limit=50&time_range=${timeRange}`,
     log
