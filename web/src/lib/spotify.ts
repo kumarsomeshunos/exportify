@@ -408,6 +408,7 @@ export async function fetchTopTracks(
       name: (track.name as string) || "",
       artist: artists.map((a) => (a.name as string) || "").join(", "),
       album: (album.name as string) || "",
+      duration_ms: (track.duration_ms as number) || 0,
       popularity: (track.popularity as number) || 0,
       spotify_url: extUrls.spotify || "",
       uri: (track.uri as string) || "",
