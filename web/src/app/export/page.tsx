@@ -278,7 +278,7 @@ export default function ExportPage() {
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
+      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] animate-fade-in">
         <div className="max-w-xl mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-[15px] font-semibold tracking-tight">Exportify</span>
@@ -302,10 +302,10 @@ export default function ExportPage() {
         </div>
       </header>
 
-      <main className="flex-1 pt-10 pb-20 px-6">
-        <div className="max-w-xl mx-auto">
+      <main className="flex-1 pt-10 pb-20">
+        <div className="max-w-xl mx-auto px-6">
           {/* Page Title & Intro */}
-          <div className="mb-8">
+          <div className="mb-8 animate-slide-up">
             <h1 className="text-2xl font-semibold tracking-tight mb-2">Export Your Data</h1>
             <p className="text-sm text-neutral-500 leading-relaxed">
               Select the categories you want to export, choose your preferred format, and download. All data is fetched directly from Spotify and processed in your browser.
@@ -313,7 +313,7 @@ export default function ExportPage() {
           </div>
 
           {/* Categories */}
-          <div className="mb-8">
+          <div className="mb-8 animate-slide-up" style={{ animationDelay: "75ms" }}>
             <div className="flex items-baseline justify-between mb-3">
               <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">Categories</span>
               <div className="flex gap-3">
@@ -375,7 +375,7 @@ export default function ExportPage() {
           </div>
 
           {/* Format */}
-          <div className="mb-8">
+          <div className="mb-8 animate-slide-up" style={{ animationDelay: "150ms" }}>
             <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium block mb-3">Format</span>
             <div className="inline-flex bg-neutral-900/80 rounded-xl p-1 gap-0.5 border border-white/[0.04]">
               {(["json", "csv"] as const).map((f) => (
@@ -397,7 +397,7 @@ export default function ExportPage() {
           </div>
 
           {/* Export Summary & Button */}
-          <div className="mb-10">
+          <div className="mb-10 animate-slide-up" style={{ animationDelay: "200ms" }}>
             {selectedCount > 0 && (
               <p className="text-xs text-neutral-500 mb-3 leading-relaxed">
                 <span className="text-neutral-400 font-medium">{summaryParts.length} {summaryParts.length === 1 ? "item" : "items"}</span>

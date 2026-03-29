@@ -92,7 +92,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06]">
+      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] animate-fade-in">
         <div className="max-w-3xl mx-auto px-6 h-12 flex items-center justify-between">
           <span className="text-[15px] font-semibold tracking-tight">Exportify</span>
           <a
@@ -219,7 +219,7 @@ export default function HomePage() {
         )}
 
         {/* Hero */}
-        <div className="max-w-2xl text-center pt-24 pb-4">
+        <div className="max-w-2xl text-center pt-24 pb-4 animate-slide-up">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.08] mb-5">
             Your Spotify data,
             <br />
@@ -253,7 +253,7 @@ export default function HomePage() {
         </div>
 
         {/* What You Can Export */}
-        <div className="max-w-2xl w-full pt-20 pb-4">
+        <div className="max-w-2xl w-full pt-20 pb-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
           <div className="text-center mb-8">
             <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">What you can export</span>
             <h2 className="text-2xl font-semibold tracking-tight mt-2">Six categories of your Spotify data</h2>
@@ -270,7 +270,7 @@ export default function HomePage() {
         </div>
 
         {/* How It Works */}
-        <div className="max-w-2xl w-full pt-20 pb-4">
+        <div className="max-w-2xl w-full pt-20 pb-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <div className="text-center mb-10">
             <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">How it works</span>
             <h2 className="text-2xl font-semibold tracking-tight mt-2">Three steps, under two minutes</h2>
@@ -303,7 +303,7 @@ export default function HomePage() {
         </div>
 
         {/* Privacy Section */}
-        <div className="max-w-2xl w-full pt-20 pb-24">
+        <div className="max-w-2xl w-full pt-20 pb-24 animate-slide-up" style={{ animationDelay: "300ms" }}>
           <div className="bg-neutral-900/60 rounded-2xl p-8 border border-white/[0.04] text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -336,7 +336,7 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="border-t border-white/[0.06] py-6 text-center">
+      <footer className="border-t border-white/[0.06] py-6 text-center animate-fade-in" style={{ animationDelay: "400ms" }}>
         <p className="text-xs text-neutral-600">
           Open source ·{" "}
           <a
