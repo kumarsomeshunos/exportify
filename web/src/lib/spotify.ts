@@ -272,13 +272,17 @@ interface PaginatedResponse {
 
 async function fetchAllPages(
   url: string,
-  log?: LogFn
+  log?: LogFn,
+  maxItems?: number
 ): Promise<Record<string, unknown>[]> {
   const items: Record<string, unknown>[] = [];
   let currentUrl: string | null = url;
   while (currentUrl) {
     const data: PaginatedResponse = await spotifyGet(currentUrl, log);
     items.push(...data.items);
+    if (maxItems && items.length >= maxItems) {
+      return items.slice(0, maxItems);
+    }
     currentUrl = data.next;
   }
   return items;
@@ -384,59 +388,59 @@ export async function fetchPlaylistTracks(
 
 export async function fetchTopTracks(
   timeRange: string,
-  log?: LogFn
+  log?: LogFn,
+  maxItems?: number
 ): Promise<TrackItem[]> {
   if (!VALID_TIME_RANGES.has(timeRange)) {
     throw new Error(`Invalid time range: ${timeRange}`);
   }
-  const data = await spotifyGet(
+  const items = await fetchAllPages(
     `https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=${timeRange}`,
-    log
+    log,
+    maxItems
   );
-  return (data.items || []).map(
-    (track: Record<string, unknown>, i: number) => {
-      const artists = (track.artists as Record<string, unknown>[]) || [];
-      const album = (track.album as Record<string, unknown>) || {};
-      const extUrls = (track.external_urls as Record<string, string>) || {};
-      return {
-        rank: i + 1,
-        name: (track.name as string) || "",
-        artist: artists.map((a) => (a.name as string) || "").join(", "),
-        album: (album.name as string) || "",
-        popularity: (track.popularity as number) || 0,
-        spotify_url: extUrls.spotify || "",
-        uri: (track.uri as string) || "",
-      };
-    }
-  );
+  return items.map((track, i) => {
+    const artists = (track.artists as Record<string, unknown>[]) || [];
+    const album = (track.album as Record<string, unknown>) || {};
+    const extUrls = (track.external_urls as Record<string, string>) || {};
+    return {
+      rank: i + 1,
+      name: (track.name as string) || "",
+      artist: artists.map((a) => (a.name as string) || "").join(", "),
+      album: (album.name as string) || "",
+      popularity: (track.popularity as number) || 0,
+      spotify_url: extUrls.spotify || "",
+      uri: (track.uri as string) || "",
+    };
+  });
 }
 
 export async function fetchTopArtists(
   timeRange: string,
-  log?: LogFn
+  log?: LogFn,
+  maxItems?: number
 ): Promise<ArtistItem[]> {
   if (!VALID_TIME_RANGES.has(timeRange)) {
     throw new Error(`Invalid time range: ${timeRange}`);
   }
-  const data = await spotifyGet(
+  const items = await fetchAllPages(
     `https://api.spotify.com/v1/me/top/artists?limit=50&time_range=${timeRange}`,
-    log
+    log,
+    maxItems
   );
-  return (data.items || []).map(
-    (artist: Record<string, unknown>, i: number) => {
-      const extUrls = (artist.external_urls as Record<string, string>) || {};
-      const followers = (artist.followers as Record<string, unknown>) || {};
-      return {
-        rank: i + 1,
-        name: (artist.name as string) || "",
-        genres: ((artist.genres as string[]) || []).join(", "),
-        followers: (followers.total as number) || 0,
-        popularity: (artist.popularity as number) || 0,
-        spotify_url: extUrls.spotify || "",
-        uri: (artist.uri as string) || "",
-      };
-    }
-  );
+  return items.map((artist, i) => {
+    const extUrls = (artist.external_urls as Record<string, string>) || {};
+    const followers = (artist.followers as Record<string, unknown>) || {};
+    return {
+      rank: i + 1,
+      name: (artist.name as string) || "",
+      genres: ((artist.genres as string[]) || []).join(", "),
+      followers: (followers.total as number) || 0,
+      popularity: (artist.popularity as number) || 0,
+      spotify_url: extUrls.spotify || "",
+      uri: (artist.uri as string) || "",
+    };
+  });
 }
 
 export async function fetchFollowedArtists(log?: LogFn): Promise<ArtistItem[]> {

@@ -34,6 +34,12 @@ const TIME_RANGES: { key: string; label: string; hint: string }[] = [
   { key: "long_term", label: "All Time", hint: "Lifetime listening history" },
 ];
 
+const LIMIT_OPTIONS: { value: number | undefined; label: string }[] = [
+  { value: 50, label: "Top 50" },
+  { value: 100, label: "Top 100" },
+  { value: undefined, label: "All" },
+];
+
 interface LogEntry {
   id: number;
   message: string;
@@ -47,11 +53,9 @@ export default function ExportPage() {
     new Set(CATEGORIES.map((c) => c.key))
   );
   const [selectedRanges, setSelectedRanges] = useState<Set<string>>(
-    new Set([
-      "top_tracks_short_term", "top_tracks_medium_term", "top_tracks_long_term",
-      "top_artists_short_term", "top_artists_medium_term", "top_artists_long_term",
-    ])
+    new Set(["top_tracks_long_term", "top_artists_long_term"])
   );
+  const [topLimit, setTopLimit] = useState<number | undefined>(undefined);
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [exporting, setExporting] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -182,9 +186,10 @@ export default function ExportPage() {
 
       if (selected.has("top_tracks")) {
         const activeRanges = TIME_RANGES.filter((r) => selectedRanges.has(`top_tracks_${r.key}`));
+        const limitLabel = topLimit ? `top ${topLimit}` : "all";
         for (const { key: range, label } of activeRanges) {
-          addLog(`Fetching top tracks (${label})…`);
-          const tracks = await fetchTopTracks(range, log);
+          addLog(`Fetching ${limitLabel} top tracks (${label})…`);
+          const tracks = await fetchTopTracks(range, log, topLimit);
           combined[`top_tracks_${range}`] = tracks;
           addLog(`Top tracks (${label}) — ${tracks.length} items`, "success");
           advance();
@@ -193,9 +198,10 @@ export default function ExportPage() {
 
       if (selected.has("top_artists")) {
         const activeRanges = TIME_RANGES.filter((r) => selectedRanges.has(`top_artists_${r.key}`));
+        const limitLabel = topLimit ? `top ${topLimit}` : "all";
         for (const { key: range, label } of activeRanges) {
-          addLog(`Fetching top artists (${label})…`);
-          const artists = await fetchTopArtists(range, log);
+          addLog(`Fetching ${limitLabel} top artists (${label})…`);
+          const artists = await fetchTopArtists(range, log, topLimit);
           combined[`top_artists_${range}`] = artists;
           addLog(`Top artists (${label}) — ${artists.length} items`, "success");
           advance();
@@ -347,24 +353,50 @@ export default function ExportPage() {
                     </button>
                     {hasRanges && on && (
                       <div className="pb-3 px-5">
-                        <div className="ml-8 flex flex-wrap gap-2">
-                          {TIME_RANGES.map((r) => {
-                            const rangeKey = `${key}_${r.key}`;
-                            const rangeOn = selectedRanges.has(rangeKey);
-                            return (
-                              <button
-                                key={rangeKey}
-                                onClick={() => toggleRange(rangeKey)}
-                                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border
-                                  ${rangeOn
-                                    ? "bg-green-500/15 text-green-400 border-green-500/25"
-                                    : "bg-neutral-800/50 text-neutral-500 border-neutral-700/40 hover:border-neutral-600"
-                                  }`}
-                              >
-                                {r.label}
-                              </button>
-                            );
-                          })}
+                        <div className="ml-8 space-y-2.5">
+                          <div>
+                            <span className="text-[10px] text-neutral-600 uppercase tracking-widest mb-1.5 block">Time Range</span>
+                            <div className="flex flex-wrap gap-2">
+                              {TIME_RANGES.map((r) => {
+                                const rangeKey = `${key}_${r.key}`;
+                                const rangeOn = selectedRanges.has(rangeKey);
+                                return (
+                                  <button
+                                    key={rangeKey}
+                                    onClick={() => toggleRange(rangeKey)}
+                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border
+                                      ${rangeOn
+                                        ? "bg-green-500/15 text-green-400 border-green-500/25"
+                                        : "bg-neutral-800/50 text-neutral-500 border-neutral-700/40 hover:border-neutral-600"
+                                      }`}
+                                  >
+                                    {r.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-neutral-600 uppercase tracking-widest mb-1.5 block">Limit</span>
+                            <div className="flex flex-wrap gap-2">
+                              {LIMIT_OPTIONS.map((opt) => {
+                                const isActive = topLimit === opt.value;
+                                return (
+                                  <button
+                                    key={opt.label}
+                                    onClick={() => setTopLimit(opt.value)}
+                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border
+                                      ${isActive
+                                        ? "bg-green-500/15 text-green-400 border-green-500/25"
+                                        : "bg-neutral-800/50 text-neutral-500 border-neutral-700/40 hover:border-neutral-600"
+                                      }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
