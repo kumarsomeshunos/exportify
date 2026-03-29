@@ -11,6 +11,9 @@ const SCOPES = [
 const TOKEN_KEY = "exportify_token";
 const VERIFIER_KEY = "exportify_code_verifier";
 const CLIENT_ID_KEY = "exportify_client_id";
+const STATE_KEY = "exportify_oauth_state";
+
+const VALID_TIME_RANGES = new Set(["short_term", "medium_term", "long_term"]);
 
 function getClientId(): string {
   // Env var takes priority (for self-hosters), then localStorage (for visitors)
@@ -84,7 +87,10 @@ export async function redirectToSpotifyAuth(): Promise<void> {
   const hashed = await sha256(codeVerifier);
   const codeChallenge = base64UrlEncode(hashed);
 
+  const state = generateRandomString(32);
+
   localStorage.setItem(VERIFIER_KEY, codeVerifier);
+  sessionStorage.setItem(STATE_KEY, state);
 
   const params = new URLSearchParams({
     response_type: "code",
@@ -93,15 +99,22 @@ export async function redirectToSpotifyAuth(): Promise<void> {
     code_challenge_method: "S256",
     code_challenge: codeChallenge,
     redirect_uri: redirectUri,
+    state,
   });
 
   window.location.href = `https://accounts.spotify.com/authorize?${params.toString()}`;
 }
 
+export function verifyOAuthState(stateFromUrl: string | null): boolean {
+  const expected = sessionStorage.getItem(STATE_KEY);
+  sessionStorage.removeItem(STATE_KEY);
+  if (!expected || !stateFromUrl) return false;
+  return expected === stateFromUrl;
+}
+
 export async function exchangeCodeForToken(code: string): Promise<boolean> {
   const codeVerifier = localStorage.getItem(VERIFIER_KEY);
   if (!codeVerifier) {
-    console.error("[Exportify] No code_verifier found in localStorage");
     return false;
   }
 
@@ -113,8 +126,6 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
     code_verifier: codeVerifier,
   });
 
-  console.log("[Exportify] Token exchange redirect_uri:", getRedirectUri());
-
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -122,8 +133,6 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("[Exportify] Token exchange failed:", response.status, errorBody);
     return false;
   }
 
@@ -142,7 +151,13 @@ async function refreshAccessToken(): Promise<boolean> {
   const stored = localStorage.getItem(TOKEN_KEY);
   if (!stored) return false;
 
-  const tokenData = JSON.parse(stored);
+  let tokenData;
+  try {
+    tokenData = JSON.parse(stored);
+  } catch {
+    localStorage.removeItem(TOKEN_KEY);
+    return false;
+  }
   if (!tokenData.refresh_token) return false;
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
@@ -168,8 +183,13 @@ async function refreshAccessToken(): Promise<boolean> {
 export function getAccessToken(): string | null {
   const stored = localStorage.getItem(TOKEN_KEY);
   if (!stored) return null;
-  const tokenData = JSON.parse(stored);
-  return tokenData.access_token || null;
+  try {
+    const tokenData = JSON.parse(stored);
+    return tokenData.access_token || null;
+  } catch {
+    localStorage.removeItem(TOKEN_KEY);
+    return null;
+  }
 }
 
 export function isAuthenticated(): boolean {
@@ -190,12 +210,16 @@ async function spotifyFetch(
   const MAX_RETRIES = 5;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    // Refresh token if expired
     const stored = localStorage.getItem(TOKEN_KEY);
     if (stored) {
-      const tokenData = JSON.parse(stored);
-      if (Date.now() >= tokenData.expires_at - 60000) {
-        await refreshAccessToken();
+      try {
+        const tokenData = JSON.parse(stored);
+        if (Date.now() >= tokenData.expires_at - 60000) {
+          await refreshAccessToken();
+        }
+      } catch {
+        localStorage.removeItem(TOKEN_KEY);
+        throw new Error("Not authenticated");
       }
     }
 
@@ -373,6 +397,9 @@ export async function fetchTopTracks(
   timeRange: string,
   log?: LogFn
 ): Promise<TrackItem[]> {
+  if (!VALID_TIME_RANGES.has(timeRange)) {
+    throw new Error(`Invalid time range: ${timeRange}`);
+  }
   const data = await spotifyGet(
     `https://api.spotify.com/v1/me/top/tracks?limit=50&time_range=${timeRange}`,
     log
@@ -399,6 +426,9 @@ export async function fetchTopArtists(
   timeRange: string,
   log?: LogFn
 ): Promise<ArtistItem[]> {
+  if (!VALID_TIME_RANGES.has(timeRange)) {
+    throw new Error(`Invalid time range: ${timeRange}`);
+  }
   const data = await spotifyGet(
     `https://api.spotify.com/v1/me/top/artists?limit=50&time_range=${timeRange}`,
     log

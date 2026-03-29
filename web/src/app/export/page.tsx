@@ -20,12 +20,18 @@ import {
 import { downloadJSON, downloadCSV } from "@/lib/export";
 
 const CATEGORIES = [
-  { key: "liked_songs", label: "Liked Songs", icon: "❤️", desc: "All your saved tracks" },
-  { key: "playlists", label: "Playlists & Tracks", icon: "📋", desc: "Every playlist with full track listings" },
-  { key: "top_tracks", label: "Top Tracks", icon: "🎵", desc: "Short, medium & all-time rankings" },
-  { key: "top_artists", label: "Top Artists", icon: "🎤", desc: "Short, medium & all-time rankings" },
-  { key: "followed_artists", label: "Followed Artists", icon: "👥", desc: "Artists you follow" },
-  { key: "recently_played", label: "Recently Played", icon: "🕐", desc: "Last 50 played tracks" },
+  { key: "liked_songs", label: "Liked Songs", icon: "❤️", desc: "All your saved tracks with artist, album, and date added" },
+  { key: "playlists", label: "Playlists & Tracks", icon: "📋", desc: "Every playlist with full track listings including collaboratives" },
+  { key: "top_tracks", label: "Top Tracks", icon: "🎵", desc: "Your most-played tracks, ranked by listening frequency" },
+  { key: "top_artists", label: "Top Artists", icon: "🎤", desc: "Your most-listened artists, ranked by play count" },
+  { key: "followed_artists", label: "Followed Artists", icon: "👥", desc: "All artists you follow with genre and popularity data" },
+  { key: "recently_played", label: "Recently Played", icon: "🕐", desc: "Your last 50 played tracks with timestamps" },
+];
+
+const TIME_RANGES: { key: string; label: string }[] = [
+  { key: "short_term", label: "4 weeks" },
+  { key: "medium_term", label: "6 months" },
+  { key: "long_term", label: "All time" },
 ];
 
 interface LogEntry {
@@ -40,20 +46,32 @@ export default function ExportPage() {
   const [selected, setSelected] = useState<Set<string>>(
     new Set(CATEGORIES.map((c) => c.key))
   );
+  const [selectedRanges, setSelectedRanges] = useState<Set<string>>(
+    new Set(TIME_RANGES.map((r) => r.key))
+  );
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [exporting, setExporting] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalSteps, setTotalSteps] = useState(0);
   const logEndRef = useRef<HTMLDivElement>(null);
-  let logId = 0;
+  const logIdRef = useRef(0);
 
   const addLog = useCallback(
     (message: string, type: LogEntry["type"] = "info") => {
-      setLogs((prev) => [...prev, { id: logId++, message, type }]);
+      setLogs((prev) => [...prev, { id: logIdRef.current++, message, type }]);
     },
     []
   );
+
+  const toggleRange = (key: string) => {
+    setSelectedRanges((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,13 +108,20 @@ export default function ExportPage() {
       return;
     }
 
+    const needsRanges = selected.has("top_tracks") || selected.has("top_artists");
+    if (needsRanges && selectedRanges.size === 0) {
+      addLog("Top Tracks or Top Artists selected but no time ranges chosen.", "warn");
+      return;
+    }
+
     setExporting(true);
     setLogs([]);
     setProgress(0);
 
+    const activeRangeCount = selectedRanges.size;
     let steps = 0;
     for (const s of selected) {
-      if (s === "top_tracks" || s === "top_artists") steps += 3;
+      if (s === "top_tracks" || s === "top_artists") steps += activeRangeCount;
       else steps += 1;
     }
     steps += 1;
@@ -146,12 +171,8 @@ export default function ExportPage() {
       }
 
       if (selected.has("top_tracks")) {
-        const ranges: [string, string][] = [
-          ["short_term", "4 weeks"],
-          ["medium_term", "6 months"],
-          ["long_term", "all time"],
-        ];
-        for (const [range, label] of ranges) {
+        const ranges = TIME_RANGES.filter((r) => selectedRanges.has(r.key));
+        for (const { key: range, label } of ranges) {
           addLog(`Fetching top tracks (${label})…`);
           const tracks = await fetchTopTracks(range, log);
           combined[`top_tracks_${range}`] = tracks;
@@ -161,12 +182,8 @@ export default function ExportPage() {
       }
 
       if (selected.has("top_artists")) {
-        const ranges: [string, string][] = [
-          ["short_term", "4 weeks"],
-          ["medium_term", "6 months"],
-          ["long_term", "all time"],
-        ];
-        for (const [range, label] of ranges) {
+        const ranges = TIME_RANGES.filter((r) => selectedRanges.has(r.key));
+        for (const { key: range, label } of ranges) {
           addLog(`Fetching top artists (${label})…`);
           const artists = await fetchTopArtists(range, log);
           combined[`top_artists_${range}`] = artists;
@@ -236,21 +253,23 @@ export default function ExportPage() {
     <div className="min-h-screen flex flex-col bg-black text-white">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-neutral-800/50">
-        <div className="max-w-xl mx-auto px-5 h-11 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">Exportify</span>
-            <span className="text-neutral-600 text-xs">·</span>
+        <div className="max-w-xl mx-auto px-5 h-12 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-bold tracking-tight">Exportify</span>
+            <span className="text-neutral-700 text-xs">|</span>
             <span className="text-sm text-neutral-500">{user.display_name}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={handleFullReset}
+              title="Clear your Client ID and sign out"
               className="text-xs text-neutral-600 hover:text-neutral-400 transition cursor-pointer"
             >
               Reset
             </button>
             <button
               onClick={handleLogout}
+              title="Sign out of your Spotify account"
               className="text-xs text-neutral-500 hover:text-neutral-300 transition cursor-pointer"
             >
               Sign out
@@ -259,69 +278,102 @@ export default function ExportPage() {
         </div>
       </header>
 
-      <main className="flex-1 pt-8 pb-16 px-5">
+      <main className="flex-1 pt-10 pb-20 px-5">
         <div className="max-w-xl mx-auto">
-          <h1 className="text-xl font-semibold tracking-tight mb-6">Export</h1>
+          <h1 className="text-2xl font-bold tracking-tight mb-1">Export Your Data</h1>
+          <p className="text-sm text-neutral-500 mb-8 leading-relaxed">
+            Choose the categories you&apos;d like to export, pick a format, and download. Everything is fetched directly from Spotify and saved to your device.
+          </p>
 
           {/* Categories */}
-          <div className="mb-6">
-            <div className="flex items-baseline justify-between mb-2">
-              <span className="text-xs text-neutral-500 uppercase tracking-wider">Categories</span>
+          <div className="mb-8">
+            <div className="flex items-baseline justify-between mb-2.5">
+              <div>
+                <span className="text-xs text-neutral-500 uppercase tracking-wider">Categories</span>
+                <p className="text-[11px] text-neutral-600 mt-0.5">Select the data you want to include in your export</p>
+              </div>
               <div className="flex gap-3">
                 <button onClick={selectAll} className="text-xs text-neutral-500 hover:text-white transition cursor-pointer">All</button>
                 <button onClick={selectNone} className="text-xs text-neutral-500 hover:text-white transition cursor-pointer">None</button>
               </div>
             </div>
-            <div className="rounded-lg bg-neutral-900 divide-y divide-neutral-800">
+            <div className="rounded-xl bg-neutral-900 divide-y divide-neutral-800/60">
               {CATEGORIES.map(({ key, label, icon, desc }) => {
                 const on = selected.has(key);
+                const hasRanges = key === "top_tracks" || key === "top_artists";
                 return (
-                  <button
-                    key={key}
-                    onClick={() => toggleCategory(key)}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-800/50 transition cursor-pointer"
-                  >
-                    <span className="text-sm">{icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <span className={`text-sm block ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
-                      <span className="text-xs text-neutral-600 block">{desc}</span>
-                    </div>
-                    {on && (
-                      <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                  <div key={key}>
+                    <button
+                      onClick={() => toggleCategory(key)}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-neutral-800/50 transition cursor-pointer"
+                    >
+                      <span className="text-base">{icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-sm font-medium block ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
+                        <span className="text-xs text-neutral-600 block mt-0.5">{desc}</span>
+                      </div>
+                      {on && (
+                        <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                    {hasRanges && on && (
+                      <div className="px-4 pb-3 pt-0 flex items-center gap-2 pl-12">
+                        <span className="text-[11px] text-neutral-600 mr-1">Time range</span>
+                        {TIME_RANGES.map(({ key: rKey, label: rLabel }) => {
+                          const rangeOn = selectedRanges.has(rKey);
+                          return (
+                            <button
+                              key={rKey}
+                              onClick={() => toggleRange(rKey)}
+                              className={`px-3 py-1 rounded-full text-[11px] font-medium transition cursor-pointer border
+                                ${rangeOn
+                                  ? "bg-green-600/20 border-green-600/40 text-green-400"
+                                  : "bg-neutral-800/60 border-neutral-700/50 text-neutral-500 hover:text-neutral-300 hover:border-neutral-600"}`}
+                            >
+                              {rLabel}
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
           </div>
 
           {/* Format */}
-          <div className="mb-6">
-            <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-2">Format</span>
-            <div className="inline-flex bg-neutral-900 rounded-lg p-1 gap-1">
+          <div className="mb-8">
+            <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-2.5">Format</span>
+            <div className="inline-flex bg-neutral-900 rounded-xl p-1 gap-1">
               {(["json", "csv"] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
-                  className={`px-5 py-1.5 rounded-md text-xs font-medium uppercase tracking-wider transition cursor-pointer
-                    ${format === f ? "bg-neutral-700 text-white" : "text-neutral-500 hover:text-neutral-300"}`}
+                  className={`px-6 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition cursor-pointer
+                    ${format === f ? "bg-neutral-700 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-300"}`}
                 >
                   {f}
                 </button>
               ))}
             </div>
+            <p className="text-[11px] text-neutral-600 mt-2">
+              {format === "json"
+                ? "JSON — Single file with all selected data in a structured format. Best for developers and data processing."
+                : "CSV — One spreadsheet file per category. Best for opening in Excel, Google Sheets, or Numbers."}
+            </p>
           </div>
 
           {/* Export */}
           <button
             onClick={handleExport}
             disabled={exporting || selected.size === 0}
-            className="w-full h-11 bg-white text-black text-sm font-semibold rounded-lg
+            className="w-full h-12 bg-white text-black text-sm font-semibold rounded-xl
               hover:bg-neutral-200 active:bg-neutral-300
               disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed
-              transition cursor-pointer mb-8"
+              transition cursor-pointer mb-10"
           >
             {exporting ? (
               <span className="inline-flex items-center gap-2">
@@ -329,30 +381,35 @@ export default function ExportPage() {
                 Exporting…
               </span>
             ) : (
-              "Export"
+              `Export ${selected.size} ${selected.size === 1 ? "Category" : "Categories"}`
             )}
           </button>
 
           {/* Activity */}
           {(logs.length > 0 || totalSteps > 0) && (
             <div>
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-xs text-neutral-500 uppercase tracking-wider">Activity</span>
+              <div className="flex items-baseline justify-between mb-2.5">
+                <div>
+                  <span className="text-xs text-neutral-500 uppercase tracking-wider">Activity Log</span>
+                  {!exporting && progress > 0 && progress === totalSteps && (
+                    <p className="text-[11px] text-green-500/80 mt-0.5">All done — your files have been downloaded</p>
+                  )}
+                </div>
                 {totalSteps > 0 && (
-                  <span className="text-xs text-neutral-600 tabular-nums">{progress}/{totalSteps}</span>
+                  <span className="text-xs text-neutral-600 tabular-nums font-medium">{progress}/{totalSteps}</span>
                 )}
               </div>
 
               {totalSteps > 0 && (
-                <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mb-3">
+                <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden mb-3">
                   <div
-                    className="h-full bg-green-500 rounded-full transition-all duration-500"
+                    className="h-full bg-green-500 rounded-full transition-all duration-500 ease-out"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
               )}
 
-              <div className="bg-neutral-900 rounded-lg p-4 max-h-80 overflow-y-auto space-y-0.5 font-mono">
+              <div className="bg-neutral-900 rounded-xl p-4 max-h-80 overflow-y-auto space-y-0.5 font-mono">
                 {logs.map((entry) => (
                   <div
                     key={entry.id}

@@ -11,12 +11,12 @@ import {
 } from "@/lib/spotify";
 
 const FEATURES = [
-  { icon: "❤️", title: "Liked Songs", desc: "All your saved tracks" },
-  { icon: "📋", title: "Playlists", desc: "Every playlist and its tracks" },
-  { icon: "🎵", title: "Top Tracks", desc: "4 weeks, 6 months, all time" },
-  { icon: "🎤", title: "Top Artists", desc: "4 weeks, 6 months, all time" },
-  { icon: "👥", title: "Followed Artists", desc: "Artists you follow" },
-  { icon: "🕐", title: "Recently Played", desc: "Last 50 tracks" },
+  { icon: "❤️", title: "Liked Songs", desc: "Every saved track with artist, album, and the date you added it" },
+  { icon: "📋", title: "Playlists", desc: "All playlists — including collaborative and private — with full track listings" },
+  { icon: "🎵", title: "Top Tracks", desc: "Your most-played songs across customizable time ranges: 4 weeks, 6 months, or all time" },
+  { icon: "🎤", title: "Top Artists", desc: "Artists you listen to most, ranked by play frequency across multiple time periods" },
+  { icon: "👥", title: "Followed Artists", desc: "Complete list of artists you follow, with genre and popularity data" },
+  { icon: "🕐", title: "Recently Played", desc: "Your last 50 played tracks with exact timestamps" },
 ];
 
 export default function HomePage() {
@@ -192,8 +192,11 @@ export default function HomePage() {
             <br />
             <span className="text-green-500">yours to keep.</span>
           </h1>
-          <p className="text-base text-neutral-400 mb-8 max-w-sm mx-auto leading-relaxed">
-            Export liked songs, playlists, top tracks, and more. Runs entirely in your browser — no server, no sign-up.
+          <p className="text-base text-neutral-400 mb-3 max-w-md mx-auto leading-relaxed">
+            Export your liked songs, playlists, top tracks, top artists, followed artists, and listening history as JSON or CSV.
+          </p>
+          <p className="text-sm text-neutral-500 mb-8 max-w-sm mx-auto leading-relaxed">
+            Everything runs in your browser. Your data never touches a server, and there&apos;s nothing to sign up for.
           </p>
           <button
             onClick={handleConnect}
@@ -216,50 +219,69 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Features */}
-        <div className="max-w-lg w-full mt-16">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {/* What you can export */}
+        <div className="max-w-xl w-full mt-20">
+          <h2 className="text-xs text-neutral-500 uppercase tracking-wider text-center mb-4">What you can export</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             {FEATURES.map(({ icon, title, desc }) => (
-              <div key={title} className="bg-neutral-900 rounded-lg p-4 hover:bg-neutral-800/70 transition">
-                <div className="text-lg mb-2">{icon}</div>
-                <div className="text-sm font-medium mb-0.5">{title}</div>
-                <div className="text-xs text-neutral-500 leading-snug">{desc}</div>
+              <div key={title} className="bg-neutral-900/80 rounded-xl p-4 hover:bg-neutral-800/60 transition-colors">
+                <div className="text-lg mb-2.5">{icon}</div>
+                <div className="text-sm font-semibold mb-1">{title}</div>
+                <div className="text-xs text-neutral-500 leading-relaxed">{desc}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Steps */}
-        <div className="max-w-lg w-full mt-16 text-center">
-          <span className="text-xs text-neutral-600 uppercase tracking-wider">How it works</span>
-          <div className="grid grid-cols-3 gap-6 mt-6">
+        {/* How it works */}
+        <div className="max-w-xl w-full mt-20 text-center">
+          <h2 className="text-xs text-neutral-500 uppercase tracking-wider mb-6">How it works</h2>
+          <div className="grid grid-cols-3 gap-8">
             {[
-              { n: "1", t: "Setup", d: "Create a free Spotify app & paste the Client ID." },
-              { n: "2", t: "Connect", d: "Sign in with Spotify via secure PKCE." },
-              { n: "3", t: "Download", d: "Pick categories, get JSON or CSV instantly." },
+              { n: "1", t: "Create a Spotify App", d: "Open the Spotify Developer Dashboard and create a free app. No coding or approval required." },
+              { n: "2", t: "Connect securely", d: "Sign in through Spotify using the PKCE flow. Your credentials stay between you and Spotify." },
+              { n: "3", t: "Choose and download", d: "Select the data categories and time ranges you want, pick JSON or CSV, and download instantly." },
             ].map((s) => (
               <div key={s.n}>
-                <div className="w-7 h-7 rounded-full bg-neutral-800 text-neutral-400 text-xs font-medium flex items-center justify-center mx-auto mb-2">{s.n}</div>
-                <div className="text-sm font-medium mb-1">{s.t}</div>
+                <div className="w-8 h-8 rounded-full bg-neutral-800/80 text-neutral-400 text-xs font-semibold flex items-center justify-center mx-auto mb-3">{s.n}</div>
+                <div className="text-sm font-semibold mb-1.5">{s.t}</div>
                 <div className="text-xs text-neutral-500 leading-relaxed">{s.d}</div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Privacy */}
+        <div className="max-w-md w-full mt-20">
+          <div className="rounded-xl bg-neutral-900/60 border border-neutral-800/50 p-6 text-center">
+            <div className="text-base mb-3">
+              <svg className="w-6 h-6 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <h3 className="text-sm font-semibold mb-2">Privacy first</h3>
+            <p className="text-xs text-neutral-500 leading-relaxed max-w-xs mx-auto">
+              Exportify runs 100% in your browser. No data is ever sent to or stored on any server. Your Spotify tokens are kept in your browser&apos;s local storage and are never shared. The source code is fully open for anyone to audit.
+            </p>
+          </div>
+        </div>
       </main>
 
-      <footer className="border-t border-neutral-800/50 py-5 text-center">
+      <footer className="border-t border-neutral-800/50 py-6 text-center">
         <p className="text-xs text-neutral-600">
-          Open source ·{" "}
+          Free and open source ·{" "}
           <a
             href="https://github.com/kumarsomeshunos/exportify"
             className="text-neutral-500 hover:text-neutral-300 transition"
             target="_blank"
             rel="noopener noreferrer"
           >
-            GitHub
+            View on GitHub
           </a>{" "}
           · MIT License
+        </p>
+        <p className="text-[11px] text-neutral-700 mt-1.5">
+          Not affiliated with Spotify. All data stays in your browser.
         </p>
       </footer>
     </div>

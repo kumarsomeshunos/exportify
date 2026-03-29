@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { exchangeCodeForToken } from "@/lib/spotify";
+import { exchangeCodeForToken, verifyOAuthState } from "@/lib/spotify";
 import { Suspense } from "react";
 
 function CallbackHandler() {
@@ -13,9 +13,15 @@ function CallbackHandler() {
   useEffect(() => {
     const code = searchParams.get("code");
     const errorParam = searchParams.get("error");
+    const state = searchParams.get("state");
 
     if (errorParam) {
       setError(`Spotify authorization failed: ${errorParam}`);
+      return;
+    }
+
+    if (!verifyOAuthState(state)) {
+      setError("Security check failed: OAuth state mismatch. Please try connecting again.");
       return;
     }
 
