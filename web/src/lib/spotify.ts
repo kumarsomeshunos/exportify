@@ -12,6 +12,21 @@ const TOKEN_KEY = "exportify_token";
 const VERIFIER_KEY = "exportify_code_verifier";
 const CLIENT_ID_KEY = "exportify_client_id";
 
+function safeJsonParse<T>(raw: string | null): T | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+interface TokenData {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number;
+}
+
 function getClientId(): string {
   // Env var takes priority (for self-hosters), then localStorage (for visitors)
   const envId = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
@@ -100,10 +115,7 @@ export async function redirectToSpotifyAuth(): Promise<void> {
 
 export async function exchangeCodeForToken(code: string): Promise<boolean> {
   const codeVerifier = localStorage.getItem(VERIFIER_KEY);
-  if (!codeVerifier) {
-    console.error("[Exportify] No code_verifier found in localStorage");
-    return false;
-  }
+  if (!codeVerifier) return false;
 
   const body = new URLSearchParams({
     client_id: getClientId(),
@@ -113,22 +125,16 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
     code_verifier: codeVerifier,
   });
 
-  console.log("[Exportify] Token exchange redirect_uri:", getRedirectUri());
-
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("[Exportify] Token exchange failed:", response.status, errorBody);
-    return false;
-  }
+  if (!response.ok) return false;
 
   const data = await response.json();
-  const tokenData = {
+  const tokenData: TokenData = {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
     expires_at: Date.now() + data.expires_in * 1000,
@@ -139,11 +145,11 @@ export async function exchangeCodeForToken(code: string): Promise<boolean> {
 }
 
 async function refreshAccessToken(): Promise<boolean> {
-  const stored = localStorage.getItem(TOKEN_KEY);
-  if (!stored) return false;
-
-  const tokenData = JSON.parse(stored);
-  if (!tokenData.refresh_token) return false;
+  const tokenData = safeJsonParse<TokenData>(localStorage.getItem(TOKEN_KEY));
+  if (!tokenData?.refresh_token) {
+    localStorage.removeItem(TOKEN_KEY);
+    return false;
+  }
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -166,9 +172,11 @@ async function refreshAccessToken(): Promise<boolean> {
 }
 
 export function getAccessToken(): string | null {
-  const stored = localStorage.getItem(TOKEN_KEY);
-  if (!stored) return null;
-  const tokenData = JSON.parse(stored);
+  const tokenData = safeJsonParse<TokenData>(localStorage.getItem(TOKEN_KEY));
+  if (!tokenData) {
+    localStorage.removeItem(TOKEN_KEY);
+    return null;
+  }
   return tokenData.access_token || null;
 }
 
@@ -190,13 +198,9 @@ async function spotifyFetch(
   const MAX_RETRIES = 5;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    // Refresh token if expired
-    const stored = localStorage.getItem(TOKEN_KEY);
-    if (stored) {
-      const tokenData = JSON.parse(stored);
-      if (Date.now() >= tokenData.expires_at - 60000) {
-        await refreshAccessToken();
-      }
+    const tokenData = safeJsonParse<TokenData>(localStorage.getItem(TOKEN_KEY));
+    if (tokenData && Date.now() >= tokenData.expires_at - 60000) {
+      await refreshAccessToken();
     }
 
     const token = getAccessToken();
