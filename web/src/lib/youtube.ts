@@ -370,8 +370,8 @@ export async function searchYouTubeMusic(
   artistName: string,
   log?: LogFn
 ): Promise<TransferMatch | null> {
-  // User explicitly requested searching only by track name
-  const query = trackName;
+  // Improve search matching by including both title and artist for high accuracy on YouTube
+  const query = `${trackName} ${artistName}`.trim();
   const params = new URLSearchParams({
     part: "snippet",
     q: query,
@@ -386,10 +386,21 @@ export async function searchYouTubeMusic(
       log
     );
 
-    if (!data.items || data.items.length === 0) return null;
+    if (!data.items || data.items.length === 0) {
+      // If the music category filter fails entirely, fallback to a general search just by title
+      const fallbackParams = new URLSearchParams({
+        part: "snippet",
+        q: trackName,
+        type: "video",
+        maxResults: "5",
+      });
+      const fallbackData = await ytGet(`https://www.googleapis.com/youtube/v3/search?${fallbackParams.toString()}`, log);
+      if (!fallbackData.items || fallbackData.items.length === 0) return null;
+      data.items = fallbackData.items;
+    }
 
     let bestMatch: TransferMatch | null = null;
-    let bestConfidence = 0;
+    let bestConfidence = -1; // Init at -1 so we ALWAYS grab at least the first result as a fallback
 
     for (const item of data.items) {
       const videoId = item.id?.videoId;
@@ -411,7 +422,7 @@ export async function searchYouTubeMusic(
         bestMatch.isWarning = false;
         return bestMatch;
       } else {
-        // Fallback: accept the best available match but mark it as a warning
+        // Fallback: accept the best available match (even if confidence is 0) but mark it as a warning
         bestMatch.isWarning = true;
         return bestMatch;
       }

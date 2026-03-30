@@ -445,7 +445,7 @@ export default function TransferPage() {
                 <div className="bg-green-500/10 border border-green-500/20 p-8 rounded-2xl flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-green-500 mb-2">Transfer Complete!</h2>
-                    <p className="text-sm text-green-500/70">Processed {stats.total} tracks into YouTube Music.</p>
+                    <p className="text-sm text-green-500/70">Processed {stats.matched + stats.warnings + stats.notFound + stats.errors} out of {stats.total} tracks into YouTube Music.</p>
                   </div>
                   <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center text-green-500">
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
