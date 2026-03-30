@@ -320,7 +320,7 @@ export default function TransferPage() {
                       >
                         <div>
                           <p className={`font-medium ${isSelected ? "text-red-500" : "text-white"}`}>{pl.name}</p>
-                          <p className="text-xs text-neutral-500 mt-0.5">{pl.tracks.total} tracks</p>
+                          <p className="text-xs text-neutral-500 mt-0.5">{pl.total_tracks} tracks</p>
                         </div>
                       </button>
                     );
