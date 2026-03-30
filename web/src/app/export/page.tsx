@@ -321,8 +321,8 @@ export default function ExportPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 pt-16 pb-24 text-left">
-        <motion.div variants={containerVariants} initial="hidden" animate="visible">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 pt-16 pb-24 text-left">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="max-w-3xl">
           {/* Page Title & Intro */}
           <motion.div variants={itemVariants} className="mb-10">
             <h1 className="text-3xl font-semibold tracking-tight mb-3">Export Your Data</h1>
