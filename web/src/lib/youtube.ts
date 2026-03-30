@@ -369,7 +369,7 @@ export async function searchYouTubeMusic(
   trackName: string,
   artistName: string,
   log?: LogFn
-): Promise<TransferMatch | null> {
+): Promise<TransferMatch | string | null> {
   // Improve search matching by including both title and artist for high accuracy on YouTube
   const query = `${trackName} ${artistName}`.trim();
   const params = new URLSearchParams({
@@ -430,8 +430,9 @@ export async function searchYouTubeMusic(
 
     return null;
   } catch (err) {
-    if (log) log(`Search error: ${err instanceof Error ? err.message : String(err)}`);
-    return null;
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    if (log) log(`Search error: ${errorMsg}`);
+    return `API_ERROR: ${errorMsg}`;
   }
 }
 
@@ -516,7 +517,10 @@ export async function transferLikedSongs(
   for (const track of spotifyTracks) {
     const match = await searchYouTubeMusic(track.name, track.artist, log);
 
-    if (match) {
+    if (typeof match === "string") {
+      stats.errors++;
+      onProgress?.(stats, track, null);
+    } else if (match) {
       // Rate the video (like it) — we use the rating endpoint
       try {
         await ytPost(
@@ -529,11 +533,11 @@ export async function transferLikedSongs(
       } catch {
         stats.errors++;
       }
+      onProgress?.(stats, track, match);
     } else {
       stats.notFound++;
+      onProgress?.(stats, track, null);
     }
-
-    onProgress?.(stats, track, match);
 
     // Rate limit
     await new Promise((r) => setTimeout(r, 300));
@@ -558,15 +562,19 @@ export async function transferPlaylist(
   for (const track of spotifyTracks) {
     const match = await searchYouTubeMusic(track.name, track.artist, log);
 
-    if (match) {
+    if (typeof match === "string") {
+      stats.errors++;
+      onProgress?.(stats, track, null);
+    } else if (match) {
       matchedVideos.push(match);
       if (match.isWarning) stats.warnings++;
       else stats.matched++;
+      onProgress?.(stats, track, match);
     } else {
       stats.notFound++;
+      onProgress?.(stats, track, null);
     }
 
-    onProgress?.(stats, track, match);
     await new Promise((r) => setTimeout(r, 300));
   }
 

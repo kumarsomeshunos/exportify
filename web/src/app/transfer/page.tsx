@@ -35,6 +35,7 @@ interface ProblemTrack {
   track: SpotifyTrackForTransfer;
   status: "warning" | "error" | "not_found";
   match?: TransferMatch;
+  errorMsg?: string;
 }
 
 const containerVariants = {
@@ -150,9 +151,12 @@ export default function TransferPage() {
       setCurrentTrack(track);
 
       try {
-        const match = await searchYouTubeMusic(track.name, track.artist, () => {});
+        const match = await searchYouTubeMusic(track.name, track.artist, (msg) => console.warn("[YT Search Debug]:", msg));
         
-        if (match) {
+        if (typeof match === "string") {
+          errorCount++;
+          currentProblems.push({ track, status: "error", errorMsg: match });
+        } else if (match) {
           if (mode === "manual" && !match.isWarning) {
             // Ask user
             setPendingReview({ track, match });
@@ -186,7 +190,7 @@ export default function TransferPage() {
         }
       } catch (err) {
         errorCount++;
-        currentProblems.push({ track, status: "error" });
+        currentProblems.push({ track, status: "error", errorMsg: String(err) });
       }
 
       setStats({ matched: matchedCount, warnings: warningCount, notFound: notFoundCount, errors: errorCount, total: tracks.length });
@@ -487,6 +491,9 @@ export default function TransferPage() {
                             <p className="text-xs text-neutral-500 truncate">{pt.track.artist}</p>
                             {pt.match && (
                               <p className="text-[10px] text-amber-500/80 mt-1 truncate">Matched: {pt.match.title}</p>
+                            )}
+                            {pt.errorMsg && (
+                              <p className="text-[10px] text-red-500/80 mt-1 truncate">Reason: {pt.errorMsg}</p>
                             )}
                           </div>
                           <div>
