@@ -64,12 +64,29 @@ To transfer your Spotify library to YouTube Music, you need to set up Google API
 ### Web App
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (or use an existing one)
-3. Enable the **YouTube Data API v3** from the [API Library](https://console.cloud.google.com/apis/library/youtube.googleapis.com)
-4. Go to **Credentials** → **Create Credentials** → **OAuth Client ID**
-   - Application type: **Web application**
-   - Authorized redirect URIs: `http://127.0.0.1:8888/callback/youtube` (local) or your production URL
-5. Copy the **Client ID** — the app will prompt you to paste it
+2. Create a new project (or use an existing one): click the project dropdown at the top → **New Project** → give it any name → **Create**
+3. Enable the **YouTube Data API v3**:
+   - In the left menu, go to **APIs & Services → Library**
+   - Search for **YouTube Data API v3** → click it → click **Enable**
+4. **Configure the OAuth consent screen** (required before creating credentials):
+   - Go to **APIs & Services → OAuth consent screen**
+   - Select **External** as the user type → click **Create**
+   - Fill in the required fields:
+     - **App name**: Exportify (or anything)
+     - **User support email**: your Google email
+     - **Developer contact email**: your Google email
+   - Click **Save and Continue** through all remaining screens
+   - On the **Test users** screen, click **Add users** and add your own Google account email
+   - Click **Save and Continue** → **Back to Dashboard**
+5. Create credentials:
+   - Go to **APIs & Services → Credentials**
+   - Click **+ Create Credentials → OAuth client ID**
+   - Set **Application type** to **Web application**
+   - Under **Authorized redirect URIs**, click **+ Add URI** and paste:
+     - `http://127.0.0.1:8888/callback/youtube` (local dev)
+     - Your production URL if deploying (e.g. `https://exportify.kumarsomesh.com/callback/youtube`)
+   - Click **Create** → copy the **Client ID** from the dialog
+6. Paste the Client ID into the Exportify transfer wizard when prompted
 
 > **Note:** YouTube Data API has a daily quota of 10,000 units. Large library transfers may need a quota increase or may span multiple sessions.
 

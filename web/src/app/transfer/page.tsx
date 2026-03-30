@@ -53,6 +53,7 @@ export default function TransferPage() {
   let logId = 0;
 
   // YouTube Music setup wizard state
+  // Steps: 0=create project+enable API, 1=configure consent screen, 2=create OAuth credentials, 3=paste client ID
   const [showYtSetup, setShowYtSetup] = useState(false);
   const [ytSetupStep, setYtSetupStep] = useState(0);
   const [googleClientIdInput, setGoogleClientIdInput] = useState("");
@@ -288,59 +289,217 @@ export default function TransferPage() {
               </button>
             </div>
 
+            {/* Step indicator */}
+            <div className="flex items-center gap-1.5 mb-6">
+              {[0, 1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`h-1 rounded-full flex-1 transition-colors ${
+                    s <= ytSetupStep ? "bg-red-500" : "bg-neutral-800"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Step 0: Create project + enable API */}
             {ytSetupStep === 0 && (
               <div className="space-y-5">
-                <p className="text-sm text-neutral-400 leading-relaxed">
-                  To transfer your music to YouTube Music, you&apos;ll need a Google Cloud project with the YouTube Data API enabled. This keeps your data private — nothing passes through our servers.
-                </p>
-                <div className="bg-neutral-800/60 rounded-xl p-5 space-y-4">
+                <div>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Step 1 of 4</p>
+                  <h3 className="text-base font-semibold mb-2">Create a project & enable the API</h3>
+                  <p className="text-sm text-neutral-400 leading-relaxed">
+                    You need a Google Cloud project with the YouTube Data API v3 enabled. This is free and keeps your data private — nothing goes through our servers.
+                  </p>
+                </div>
+                <div className="bg-neutral-800/60 rounded-xl p-4 space-y-4">
                   <div className="flex gap-3.5">
                     <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">1</span>
                     <div>
-                      <p className="text-sm text-neutral-200 font-medium">Open the Google Cloud Console</p>
+                      <p className="text-sm text-neutral-200 font-medium">Open Google Cloud Console</p>
                       <a
-                        href="https://console.cloud.google.com/apis/library/youtube.googleapis.com"
+                        href="https://console.cloud.google.com/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-red-400 hover:text-red-300 transition-colors mt-0.5 inline-block"
                       >
-                        Enable YouTube Data API v3 →
+                        console.cloud.google.com →
                       </a>
                     </div>
                   </div>
                   <div className="flex gap-3.5">
                     <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                    <div>
-                      <p className="text-sm text-neutral-200">Go to <strong className="text-white">Credentials</strong>, click <strong className="text-white">Create Credentials → OAuth Client ID</strong></p>
-                      <p className="text-xs text-neutral-500 mt-0.5">Select &quot;Web application&quot; as the type</p>
-                    </div>
+                    <p className="text-sm text-neutral-200">Click the project dropdown at the top → <strong className="text-white">New Project</strong> → give it any name → click <strong className="text-white">Create</strong></p>
                   </div>
                   <div className="flex gap-3.5">
                     <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">3</span>
                     <div>
-                      <p className="text-sm text-neutral-200">Add this as an <strong className="text-white">Authorized redirect URI</strong>:</p>
-                      <code className="text-xs text-red-400 bg-black/40 px-2.5 py-1.5 rounded-lg mt-1.5 block break-all font-mono">{redirectUri}</code>
+                      <p className="text-sm text-neutral-200">Enable the YouTube Data API v3:</p>
+                      <a
+                        href="https://console.cloud.google.com/apis/library/youtube.googleapis.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors mt-1 inline-block"
+                      >
+                        APIs &amp; Services → Library → YouTube Data API v3 → Enable →
+                      </a>
                     </div>
-                  </div>
-                  <div className="flex gap-3.5">
-                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">4</span>
-                    <p className="text-sm text-neutral-200">Copy the <strong className="text-white">Client ID</strong> (ends in <code className="text-red-400">.apps.googleusercontent.com</code>)</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setYtSetupStep(1)}
                   className="w-full h-11 bg-white text-black text-sm font-semibold rounded-xl hover:bg-neutral-100 active:bg-neutral-200 transition-colors cursor-pointer"
                 >
-                  I have my Client ID
+                  Done — Next Step
                 </button>
               </div>
             )}
 
+            {/* Step 1: Configure OAuth consent screen */}
             {ytSetupStep === 1 && (
               <div className="space-y-5">
                 <div>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Step 2 of 4</p>
+                  <h3 className="text-base font-semibold mb-2">Configure the OAuth consent screen</h3>
                   <p className="text-sm text-neutral-400 leading-relaxed">
-                    Paste your Google OAuth Client ID below. It stays in your browser&apos;s local storage and is never sent to any external server.
+                    Before creating credentials, Google requires you to set up an OAuth consent screen. This defines what users see when they authorize the app.
+                  </p>
+                </div>
+                <div className="bg-neutral-800/60 rounded-xl p-4 space-y-4">
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">Go to <strong className="text-white">APIs &amp; Services → OAuth consent screen</strong></p>
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials/consent"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors mt-0.5 inline-block"
+                      >
+                        Open OAuth consent screen →
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">Select <strong className="text-white">External</strong> as the user type, then click <strong className="text-white">Create</strong></p>
+                      <p className="text-xs text-neutral-500 mt-0.5">Choose &quot;External&quot; even if it&apos;s just for personal use</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">Fill in the required fields:</p>
+                      <ul className="text-xs text-neutral-500 mt-1.5 space-y-1">
+                        <li>• <strong className="text-neutral-300">App name</strong> — anything (e.g. &quot;Exportify&quot;)</li>
+                        <li>• <strong className="text-neutral-300">User support email</strong> — your Google email</li>
+                        <li>• <strong className="text-neutral-300">Developer contact email</strong> — your Google email</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                    <p className="text-sm text-neutral-200">Click <strong className="text-white">Save and Continue</strong> through all remaining screens — you can skip the optional fields</p>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">5</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">On the <strong className="text-white">Test users</strong> screen, click <strong className="text-white">Add users</strong> and add your own Google account email</p>
+                      <p className="text-xs text-neutral-500 mt-0.5">This allows your account to authorize while the app is in &quot;Testing&quot; mode</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">6</span>
+                    <p className="text-sm text-neutral-200">Click <strong className="text-white">Save and Continue</strong> then <strong className="text-white">Back to Dashboard</strong></p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setYtSetupStep(0)}
+                    className="h-11 px-5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer rounded-xl"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setYtSetupStep(2)}
+                    className="flex-1 h-11 bg-white text-black text-sm font-semibold rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  >
+                    Done — Next Step
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Create OAuth credentials */}
+            {ytSetupStep === 2 && (
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Step 3 of 4</p>
+                  <h3 className="text-base font-semibold mb-2">Create OAuth credentials</h3>
+                  <p className="text-sm text-neutral-400 leading-relaxed">
+                    Now create the OAuth Client ID that Exportify will use to connect to YouTube Music.
+                  </p>
+                </div>
+                <div className="bg-neutral-800/60 rounded-xl p-4 space-y-4">
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">Go to <strong className="text-white">APIs &amp; Services → Credentials</strong></p>
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors mt-0.5 inline-block"
+                      >
+                        Open Credentials →
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <p className="text-sm text-neutral-200">Click <strong className="text-white">+ Create Credentials → OAuth client ID</strong></p>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <p className="text-sm text-neutral-200">Set <strong className="text-white">Application type</strong> to <strong className="text-white">Web application</strong></p>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">4</span>
+                    <div>
+                      <p className="text-sm text-neutral-200">Under <strong className="text-white">Authorized redirect URIs</strong>, click <strong className="text-white">+ Add URI</strong> and paste:</p>
+                      <code className="text-xs text-red-400 bg-black/40 px-2.5 py-1.5 rounded-lg mt-1.5 block break-all font-mono">{redirectUri}</code>
+                    </div>
+                  </div>
+                  <div className="flex gap-3.5">
+                    <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">5</span>
+                    <p className="text-sm text-neutral-200">Click <strong className="text-white">Create</strong> — a dialog will appear showing your Client ID</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setYtSetupStep(1)}
+                    className="h-11 px-5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer rounded-xl"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => setYtSetupStep(3)}
+                    className="flex-1 h-11 bg-white text-black text-sm font-semibold rounded-xl hover:bg-neutral-100 transition-colors cursor-pointer"
+                  >
+                    I have my Client ID
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Paste Client ID */}
+            {ytSetupStep === 3 && (
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Step 4 of 4</p>
+                  <h3 className="text-base font-semibold mb-2">Paste your Client ID</h3>
+                  <p className="text-sm text-neutral-400 leading-relaxed">
+                    Paste the Client ID from Google Cloud. It&apos;s stored only in your browser and never sent anywhere except directly to Google.
                   </p>
                 </div>
                 <div>
@@ -350,7 +509,7 @@ export default function TransferPage() {
                     value={googleClientIdInput}
                     onChange={(e) => setGoogleClientIdInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSaveAndConnectYouTube()}
-                    placeholder="e.g. 123456789.apps.googleusercontent.com"
+                    placeholder="123456789-xxxx.apps.googleusercontent.com"
                     autoFocus
                     className="w-full h-11 bg-neutral-800/80 border border-neutral-700/60 rounded-xl px-4 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition"
                     spellCheck={false}
@@ -359,7 +518,7 @@ export default function TransferPage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setYtSetupStep(0)}
+                    onClick={() => setYtSetupStep(2)}
                     className="h-11 px-5 text-sm text-neutral-400 hover:text-white transition-colors cursor-pointer rounded-xl"
                   >
                     Back
@@ -468,7 +627,7 @@ export default function TransferPage() {
             </div>
             {hasGoogleClientId && !ytConnected && (
               <button
-                onClick={() => { setShowYtSetup(true); setYtSetupStep(1); setGoogleClientIdInput(getStoredGoogleClientId()); }}
+                onClick={() => { setShowYtSetup(true); setYtSetupStep(3); setGoogleClientIdInput(getStoredGoogleClientId()); }}
                 className="block mt-2 text-xs text-neutral-600 hover:text-neutral-400 transition-colors cursor-pointer"
               >
                 Change Google Client ID
