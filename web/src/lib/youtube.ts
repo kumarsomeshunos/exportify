@@ -465,6 +465,21 @@ export async function addToYouTubePlaylist(
   }
 }
 
+export async function rateYouTubeVideo(
+  videoId: string,
+  rating: "like" | "dislike" | "none" = "like",
+): Promise<boolean> {
+  try {
+    await ytFetch(
+      `https://www.googleapis.com/youtube/v3/videos/rate?id=${encodeURIComponent(videoId)}&rating=${rating}`,
+      { method: "POST" },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ── Transfer orchestration ────────────────────────────────────
 
 export async function transferLikedSongs(

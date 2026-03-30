@@ -283,34 +283,21 @@ export default function ExportPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] animate-fade-in">
-        <div className="max-w-xl mx-auto px-6 h-12 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <a href="/" className="text-[15px] font-semibold tracking-tight hover:text-neutral-300 transition-colors">Exportify</a>
-            <span className="text-neutral-700">·</span>
-            <span className="text-sm text-neutral-500">{user.display_name}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-white font-medium">Export</span>
-            <a href="/transfer" className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Transfer</a>
-            <button
-              onClick={handleFullReset}
-              className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors cursor-pointer"
-            >
-              Reset
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors cursor-pointer"
-            >
-              Sign out
-            </button>
-          </div>
+      {/* ─── Floating Glass Nav ─── */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+        <div className="flex items-center gap-0.5 bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08] rounded-2xl px-1.5 h-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <a href="/" className="px-3 h-7 flex items-center rounded-xl text-[13px] font-semibold text-white hover:bg-white/[0.06] transition-colors">Exportify</a>
+          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
+          <span className="px-2.5 h-7 flex items-center rounded-xl text-[13px] bg-white/[0.1] text-white font-medium">Export</span>
+          <a href="/transfer" className="px-2.5 h-7 flex items-center rounded-xl text-[13px] text-neutral-400 hover:bg-white/[0.06] hover:text-white transition-colors">Transfer</a>
+          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
+          <span className="px-2 text-[13px] text-neutral-500 truncate max-w-28">{user.display_name}</span>
+          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
+          <button onClick={handleLogout} className="px-2 h-7 flex items-center rounded-xl text-[13px] text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-300 transition-colors cursor-pointer">Sign out</button>
         </div>
-      </header>
+      </nav>
 
-      <main className="flex-1 pt-10 pb-20">
+      <main className="flex-1 pt-20 pb-20">
         <div className="max-w-xl mx-auto px-6">
           {/* Page Title & Intro */}
           <div className="mb-8 animate-slide-up">

@@ -91,22 +91,16 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
-      {/* Nav */}
-      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] animate-fade-in">
-        <div className="max-w-3xl mx-auto px-6 h-12 flex items-center justify-between">
-          <span className="text-[15px] font-semibold tracking-tight">Exportify</span>
-          <a
-            href="https://github.com/kumarsomeshunos/exportify"
-            className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub
-          </a>
+      {/* ─── Floating Glass Nav ─── */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+        <div className="flex items-center gap-0.5 bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08] rounded-2xl px-1.5 h-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <span className="px-3 h-7 flex items-center rounded-xl text-[13px] font-semibold text-white">Exportify</span>
+          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
+          <a href="https://github.com/kumarsomeshunos/exportify" className="px-2.5 h-7 flex items-center rounded-xl text-[13px] text-neutral-400 hover:bg-white/[0.06] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </nav>
 
-      <main className="flex-1 flex flex-col items-center px-6">
+      <main className="flex-1 flex flex-col items-center px-6 pt-10">
         {/* Setup Wizard Modal */}
         {showSetup && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-md px-5">
