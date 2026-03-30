@@ -26,6 +26,9 @@ import {
   transferLikedSongs,
   transferPlaylist,
   searchYouTubeMusic,
+  createYouTubePlaylist,
+  addToYouTubePlaylist,
+  rateYouTubeVideo,
 } from "@/lib/youtube";
 import { downloadCSV } from "@/lib/export";
 
@@ -145,6 +148,20 @@ export default function TransferPage() {
     let errorCount = 0;
     const currentProblems: ProblemTrack[] = [];
 
+    let targetPlaylistId: string | null = null;
+    if (selectedItem.type !== "liked") {
+      targetPlaylistId = await createYouTubePlaylist(
+        selectedItem.name,
+        "Transferred from Spotify via Exportify"
+      );
+      if (!targetPlaylistId) {
+        alert("Failed to create YouTube playlist for transfer. Check credentials/quota.");
+        setTransferring(false);
+        setComplete(true);
+        return;
+      }
+    }
+
     // Custom execution loop for manual + auto modes
     for (const track of tracks) {
       if (stopRef.current) break;
@@ -173,17 +190,28 @@ export default function TransferPage() {
             }
           }
 
-          if (match.isWarning) {
-            warningCount++;
-            currentProblems.push({ track, match, status: "warning" });
-          } else {
-            matchedCount++;
+          let saveSuccess = false;
+          try {
+            if (selectedItem.type === "liked") {
+              saveSuccess = await rateYouTubeVideo(match.videoId);
+            } else if (targetPlaylistId) {
+              saveSuccess = await addToYouTubePlaylist(targetPlaylistId, match.videoId);
+            }
+          } catch (err) {
+            saveSuccess = false;
           }
-          
-          // Note: In a real implementation we would actually create the playlist here.
-          // For brevity, we simulate the success pattern. Actual implementation relies on youtube.ts orchestrators if auto,
-          // but because we have a manual mode, we have to re-implement orchestrator logic here.
-          // Assuming successful transfer for demo purposes of the UI update:
+
+          if (saveSuccess) {
+            if (match.isWarning) {
+              warningCount++;
+              currentProblems.push({ track, match, status: "warning" });
+            } else {
+              matchedCount++;
+            }
+          } else {
+            errorCount++;
+            currentProblems.push({ track, status: "error", errorMsg: "Failed to save match to YouTube library/playlist." });
+          }
         } else {
           notFoundCount++;
           currentProblems.push({ track, status: "not_found" });
