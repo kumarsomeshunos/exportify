@@ -14,6 +14,7 @@ const YT_SCOPES = [
 const YT_TOKEN_KEY = "exportify_yt_token";
 const YT_VERIFIER_KEY = "exportify_yt_code_verifier";
 const YT_CLIENT_ID_KEY = "exportify_google_client_id";
+const YT_CLIENT_SECRET_KEY = "exportify_google_client_secret";
 
 const MATCH_CONFIDENCE_THRESHOLD = 0.6;
 
@@ -43,6 +44,27 @@ export function saveGoogleClientId(clientId: string): void {
 
 export function clearGoogleClientId(): void {
   localStorage.removeItem(YT_CLIENT_ID_KEY);
+  localStorage.removeItem(YT_CLIENT_SECRET_KEY);
+}
+
+// ── Client Secret management ──────────────────────────────────
+
+function getGoogleClientSecret(): string {
+  const envSecret = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET;
+  if (envSecret) return envSecret;
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(YT_CLIENT_SECRET_KEY) || "";
+  }
+  return "";
+}
+
+export function getStoredGoogleClientSecret(): string {
+  if (typeof window === "undefined") return "";
+  return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || localStorage.getItem(YT_CLIENT_SECRET_KEY) || "";
+}
+
+export function saveGoogleClientSecret(secret: string): void {
+  localStorage.setItem(YT_CLIENT_SECRET_KEY, secret.trim());
 }
 
 // ── PKCE helpers ──────────────────────────────────────────────
@@ -113,6 +135,7 @@ export async function exchangeYouTubeCodeForToken(code: string): Promise<boolean
 
   const body = new URLSearchParams({
     client_id: getGoogleClientId(),
+    client_secret: getGoogleClientSecret(),
     grant_type: "authorization_code",
     code,
     redirect_uri: getYouTubeRedirectUri(),
@@ -126,10 +149,8 @@ export async function exchangeYouTubeCodeForToken(code: string): Promise<boolean
   });
 
   if (!response.ok) {
-    if (isDev()) {
-      const errorBody = await response.text();
-      console.error("[Exportify] YouTube token exchange failed:", response.status, errorBody);
-    }
+    const errorBody = await response.text();
+    console.error("[Exportify] YouTube token exchange failed:", response.status, errorBody);
     return false;
   }
 
@@ -156,6 +177,7 @@ async function refreshYouTubeToken(): Promise<boolean> {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: getGoogleClientId(),
+      client_secret: getGoogleClientSecret(),
       grant_type: "refresh_token",
       refresh_token: tokenData.refresh_token,
     }),

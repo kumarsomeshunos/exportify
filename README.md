@@ -130,6 +130,7 @@ NEXT_PUBLIC_REDIRECT_URI=http://127.0.0.1:8888/callback
 
 # Optional: YouTube Music transfer
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
+NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 NEXT_PUBLIC_YOUTUBE_REDIRECT_URI=http://127.0.0.1:8888/callback/youtube
 ```
 

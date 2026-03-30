@@ -18,7 +18,9 @@ import {
   redirectToYouTubeAuth,
   logoutYouTube,
   getStoredGoogleClientId,
+  getStoredGoogleClientSecret,
   saveGoogleClientId,
+  saveGoogleClientSecret,
   getConfiguredYouTubeRedirectUri,
   transferLikedSongs,
   transferPlaylist,
@@ -53,10 +55,11 @@ export default function TransferPage() {
   let logId = 0;
 
   // YouTube Music setup wizard state
-  // Steps: 0=create project+enable API, 1=configure consent screen, 2=create OAuth credentials, 3=paste client ID
+  // Steps: 0=create project+enable API, 1=configure consent screen, 2=create OAuth credentials, 3=paste client ID+secret
   const [showYtSetup, setShowYtSetup] = useState(false);
   const [ytSetupStep, setYtSetupStep] = useState(0);
   const [googleClientIdInput, setGoogleClientIdInput] = useState("");
+  const [googleClientSecretInput, setGoogleClientSecretInput] = useState("");
   const [hasGoogleClientId, setHasGoogleClientId] = useState(false);
 
   const addLog = useCallback(
@@ -104,9 +107,11 @@ export default function TransferPage() {
   };
 
   const handleSaveAndConnectYouTube = () => {
-    const trimmed = googleClientIdInput.trim();
-    if (!trimmed) return;
-    saveGoogleClientId(trimmed);
+    const trimmedId = googleClientIdInput.trim();
+    const trimmedSecret = googleClientSecretInput.trim();
+    if (!trimmedId || !trimmedSecret) return;
+    saveGoogleClientId(trimmedId);
+    saveGoogleClientSecret(trimmedSecret);
     setHasGoogleClientId(true);
     setShowYtSetup(false);
     redirectToYouTubeAuth();
@@ -472,7 +477,7 @@ export default function TransferPage() {
                   </div>
                   <div className="flex gap-3.5">
                     <span className="w-6 h-6 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center shrink-0 mt-0.5">5</span>
-                    <p className="text-sm text-neutral-200">Click <strong className="text-white">Create</strong> — a dialog will appear showing your Client ID</p>
+                    <p className="text-sm text-neutral-200">Click <strong className="text-white">Create</strong> — a dialog will appear showing both your <strong className="text-white">Client ID</strong> and <strong className="text-white">Client Secret</strong>. Copy both.</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -492,29 +497,48 @@ export default function TransferPage() {
               </div>
             )}
 
-            {/* Step 3: Paste Client ID */}
+            {/* Step 3: Paste Client ID + Secret */}
             {ytSetupStep === 3 && (
               <div className="space-y-5">
                 <div>
                   <p className="text-xs text-neutral-500 uppercase tracking-wider font-medium mb-1">Step 4 of 4</p>
-                  <h3 className="text-base font-semibold mb-2">Paste your Client ID</h3>
+                  <h3 className="text-base font-semibold mb-2">Paste your credentials</h3>
                   <p className="text-sm text-neutral-400 leading-relaxed">
-                    Paste the Client ID from Google Cloud. It&apos;s stored only in your browser and never sent anywhere except directly to Google.
+                    Paste the Client ID and Client Secret from the Google Cloud dialog. Both stay only in your browser and are never sent to any server other than Google.
                   </p>
                 </div>
-                <div>
-                  <label className="text-xs text-neutral-500 uppercase tracking-wider font-medium block mb-2">Google Client ID</label>
-                  <input
-                    type="text"
-                    value={googleClientIdInput}
-                    onChange={(e) => setGoogleClientIdInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSaveAndConnectYouTube()}
-                    placeholder="123456789-xxxx.apps.googleusercontent.com"
-                    autoFocus
-                    className="w-full h-11 bg-neutral-800/80 border border-neutral-700/60 rounded-xl px-4 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition"
-                    spellCheck={false}
-                    autoComplete="off"
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-neutral-500 uppercase tracking-wider font-medium block mb-2">Client ID</label>
+                    <input
+                      type="text"
+                      value={googleClientIdInput}
+                      onChange={(e) => setGoogleClientIdInput(e.target.value)}
+                      placeholder="123456789-xxxx.apps.googleusercontent.com"
+                      autoFocus
+                      className="w-full h-11 bg-neutral-800/80 border border-neutral-700/60 rounded-xl px-4 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition"
+                      spellCheck={false}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-neutral-500 uppercase tracking-wider font-medium block mb-2">Client Secret</label>
+                    <input
+                      type="password"
+                      value={googleClientSecretInput}
+                      onChange={(e) => setGoogleClientSecretInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveAndConnectYouTube()}
+                      placeholder="GOCSPX-••••••••••••••••"
+                      className="w-full h-11 bg-neutral-800/80 border border-neutral-700/60 rounded-xl px-4 text-sm text-white placeholder:text-neutral-600 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/30 transition"
+                      spellCheck={false}
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+                  <p className="text-xs text-amber-400/80 leading-relaxed">
+                    <strong className="text-amber-300">Why a client secret?</strong> Google requires it for web OAuth apps during the token exchange. Your secret never leaves your browser — it&apos;s only sent directly to Google&apos;s servers over HTTPS.
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -525,7 +549,7 @@ export default function TransferPage() {
                   </button>
                   <button
                     onClick={handleSaveAndConnectYouTube}
-                    disabled={!googleClientIdInput.trim()}
+                    disabled={!googleClientIdInput.trim() || !googleClientSecretInput.trim()}
                     className="flex-1 h-11 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-500 disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   >
                     Connect YouTube Music
@@ -536,7 +560,7 @@ export default function TransferPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                   <p className="text-xs text-neutral-600">
-                    Secured with OAuth 2.0 PKCE — no client secret required
+                    Stored in browser localStorage only
                   </p>
                 </div>
               </div>
@@ -627,10 +651,10 @@ export default function TransferPage() {
             </div>
             {hasGoogleClientId && !ytConnected && (
               <button
-                onClick={() => { setShowYtSetup(true); setYtSetupStep(3); setGoogleClientIdInput(getStoredGoogleClientId()); }}
+                onClick={() => { setShowYtSetup(true); setYtSetupStep(3); setGoogleClientIdInput(getStoredGoogleClientId()); setGoogleClientSecretInput(getStoredGoogleClientSecret()); }}
                 className="block mt-2 text-xs text-neutral-600 hover:text-neutral-400 transition-colors cursor-pointer"
               >
-                Change Google Client ID
+                Change credentials
               </button>
             )}
           </div>
