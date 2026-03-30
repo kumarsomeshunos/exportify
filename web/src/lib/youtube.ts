@@ -346,10 +346,12 @@ export interface TransferMatch {
   title: string;
   channelTitle: string;
   confidence: number;
+  isWarning?: boolean;
 }
 
 export interface TransferStats {
   matched: number;
+  warnings: number;
   notFound: number;
   errors: number;
   total: number;
@@ -364,9 +366,12 @@ export interface SpotifyTrackForTransfer {
 // ── Search ────────────────────────────────────────────────────
 
 export async function searchYouTubeMusic(
-  query: string,
+  trackName: string,
+  artistName: string,
   log?: LogFn
 ): Promise<TransferMatch | null> {
+  // User explicitly requested searching only by track name
+  const query = trackName;
   const params = new URLSearchParams({
     part: "snippet",
     q: query,
@@ -386,11 +391,6 @@ export async function searchYouTubeMusic(
     let bestMatch: TransferMatch | null = null;
     let bestConfidence = 0;
 
-    // Extract the original search terms
-    const parts = query.split(" ");
-    const artistPart = parts.slice(Math.floor(parts.length / 2)).join(" ");
-    const namePart = parts.slice(0, Math.floor(parts.length / 2)).join(" ");
-
     for (const item of data.items) {
       const videoId = item.id?.videoId;
       if (!videoId) continue;
@@ -398,7 +398,7 @@ export async function searchYouTubeMusic(
       const title = item.snippet?.title || "";
       const channelTitle = item.snippet?.channelTitle || "";
 
-      const confidence = matchConfidence(namePart, artistPart, title, channelTitle);
+      const confidence = matchConfidence(trackName, artistName, title, channelTitle);
 
       if (confidence > bestConfidence) {
         bestConfidence = confidence;
@@ -406,8 +406,15 @@ export async function searchYouTubeMusic(
       }
     }
 
-    if (bestMatch && bestMatch.confidence >= MATCH_CONFIDENCE_THRESHOLD) {
-      return bestMatch;
+    if (bestMatch) {
+      if (bestMatch.confidence >= MATCH_CONFIDENCE_THRESHOLD) {
+        bestMatch.isWarning = false;
+        return bestMatch;
+      } else {
+        // Fallback: accept the best available match but mark it as a warning
+        bestMatch.isWarning = true;
+        return bestMatch;
+      }
     }
 
     return null;
@@ -487,11 +494,16 @@ export async function transferLikedSongs(
   onProgress?: (stats: TransferStats, current: SpotifyTrackForTransfer, match: TransferMatch | null) => void,
   log?: LogFn,
 ): Promise<TransferStats> {
-  const stats: TransferStats = { matched: 0, notFound: 0, errors: 0, total: spotifyTracks.length };
+  const stats: TransferStats = {
+    matched: 0,
+    warnings: 0,
+    notFound: 0,
+    errors: 0,
+    total: spotifyTracks.length,
+  };
 
   for (const track of spotifyTracks) {
-    const query = `${track.name} ${track.artist.split(",")[0]}`;
-    const match = await searchYouTubeMusic(query, log);
+    const match = await searchYouTubeMusic(track.name, track.artist, log);
 
     if (match) {
       // Rate the video (like it) — we use the rating endpoint
@@ -501,7 +513,8 @@ export async function transferLikedSongs(
           null,
           log
         );
-        stats.matched++;
+        if (match.isWarning) stats.warnings++;
+        else stats.matched++;
       } catch {
         stats.errors++;
       }
@@ -525,19 +538,19 @@ export async function transferPlaylist(
   log?: LogFn,
 ): Promise<TransferStats & { playlistId: string | null }> {
   const stats: TransferStats & { playlistId: string | null } = {
-    matched: 0, notFound: 0, errors: 0, total: spotifyTracks.length, playlistId: null,
+    matched: 0, warnings: 0, notFound: 0, errors: 0, total: spotifyTracks.length, playlistId: null,
   };
 
   // Phase 1: Search all tracks
   const matchedVideos: TransferMatch[] = [];
 
   for (const track of spotifyTracks) {
-    const query = `${track.name} ${track.artist.split(",")[0]}`;
-    const match = await searchYouTubeMusic(query, log);
+    const match = await searchYouTubeMusic(track.name, track.artist, log);
 
     if (match) {
       matchedVideos.push(match);
-      stats.matched++;
+      if (match.isWarning) stats.warnings++;
+      else stats.matched++;
     } else {
       stats.notFound++;
     }

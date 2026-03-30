@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   isAuthenticated,
   logout,
@@ -45,6 +46,23 @@ interface LogEntry {
   message: string;
   type: "info" | "success" | "error" | "warn";
 }
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
+  },
+};
 
 export default function ExportPage() {
   const router = useRouter();
@@ -282,224 +300,247 @@ export default function ExportPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-white">
-      {/* ─── Floating Glass Nav ─── */}
-      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
-        <div className="flex items-center gap-0.5 bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08] rounded-2xl px-1.5 h-10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-          <a href="/" className="px-3 h-7 flex items-center rounded-xl text-[13px] font-semibold text-white hover:bg-white/[0.06] transition-colors">Exportify</a>
-          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
-          <span className="px-2.5 h-7 flex items-center rounded-xl text-[13px] bg-white/[0.1] text-white font-medium">Export</span>
-          <a href="/transfer" className="px-2.5 h-7 flex items-center rounded-xl text-[13px] text-neutral-400 hover:bg-white/[0.06] hover:text-white transition-colors">Transfer</a>
-          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
-          <span className="px-2 text-[13px] text-neutral-500 truncate max-w-28">{user.display_name}</span>
-          <div className="w-px h-3.5 bg-white/[0.06] mx-0.5" />
-          <button onClick={handleLogout} className="px-2 h-7 flex items-center rounded-xl text-[13px] text-neutral-500 hover:bg-white/[0.06] hover:text-neutral-300 transition-colors cursor-pointer">Sign out</button>
-        </div>
-      </nav>
-
-      <main className="flex-1 pt-20 pb-20">
-        <div className="max-w-xl mx-auto px-6">
-          {/* Page Title & Intro */}
-          <div className="mb-8 animate-slide-up">
-            <h1 className="text-2xl font-semibold tracking-tight mb-2">Export Your Data</h1>
-            <p className="text-sm text-neutral-500 leading-relaxed">
-              Select the categories you want to export, choose your preferred format, and download. All data is fetched directly from Spotify and processed in your browser.
-            </p>
+    <div className="min-h-screen flex flex-col bg-black text-white selection:bg-white/20">
+      {/* ─── Global Navbar ─── */}
+      <header className="sticky top-0 z-50 bg-black/70 backdrop-blur-2xl border-b border-white/[0.06]">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <a href="/" className="text-[15px] font-bold tracking-tight text-white hover:text-neutral-300 transition-colors">Exportify</a>
+            <div className="hidden sm:flex items-center gap-4">
+              <span className="text-sm font-medium text-white">Export</span>
+              <a href="/transfer" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Transfer</a>
+            </div>
           </div>
+          <div className="flex items-center gap-4">
+            <button onClick={handleFullReset} className="text-sm font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer hidden sm:block">Reset Credentials</button>
+            <div className="flex items-center gap-4 pl-4 border-l border-white/[0.08]">
+              <span className="text-sm text-neutral-400 truncate max-w-[120px]">{user.display_name}</span>
+              <button onClick={handleLogout} className="text-sm font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer">Sign out</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-4xl w-full mx-auto px-6 pt-16 pb-24 text-left">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible">
+          {/* Page Title & Intro */}
+          <motion.div variants={itemVariants} className="mb-10">
+            <h1 className="text-3xl font-semibold tracking-tight mb-3">Export Your Data</h1>
+            <p className="text-sm text-neutral-400 leading-relaxed max-w-lg">
+              Select the categories to export, pick a format, and download. Everything runs directly from Spotify to your browser.
+            </p>
+          </motion.div>
 
           {/* Categories */}
-          <div className="mb-8 animate-slide-up" style={{ animationDelay: "75ms" }}>
-            <div className="flex items-baseline justify-between mb-3">
+          <motion.div variants={itemVariants} className="mb-10">
+            <div className="flex items-baseline justify-between mb-4">
               <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">Categories</span>
-              <div className="flex gap-3">
-                <button onClick={selectAll} className="text-xs text-neutral-500 hover:text-white transition-colors cursor-pointer">All</button>
-                <button onClick={selectNone} className="text-xs text-neutral-500 hover:text-white transition-colors cursor-pointer">None</button>
+              <div className="flex gap-4">
+                <button onClick={selectAll} className="text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer">Select All</button>
+                <button onClick={selectNone} className="text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer">Deselect All</button>
               </div>
             </div>
-            <div className="rounded-2xl bg-neutral-900/80 divide-y divide-white/[0.04] border border-white/[0.04]">
+            
+            <motion.div layout className="rounded-2xl bg-neutral-900/80 divide-y divide-white/[0.04] border border-white/[0.04]">
               {CATEGORIES.map(({ key, label, icon, desc }) => {
                 const on = selected.has(key);
                 const hasRanges = key === "top_tracks" || key === "top_artists";
                 return (
-                  <div key={key}>
+                  <motion.div layout key={key} className="overflow-hidden">
                     <button
                       onClick={() => toggleCategory(key)}
-                      className="w-full flex items-center gap-3.5 px-5 py-4 text-left hover:bg-white/[0.03] transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-4 px-6 py-5 text-left hover:bg-white/[0.03] transition-colors cursor-pointer"
                     >
-                      <span className="text-lg">{icon}</span>
+                      <span className="text-2xl">{icon}</span>
                       <div className="flex-1 min-w-0">
-                        <span className={`text-sm font-medium block transition-colors ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
-                        <span className="text-xs text-neutral-600 block mt-0.5 leading-relaxed">{desc}</span>
+                        <span className={`text-base font-semibold block transition-colors ${on ? "text-white" : "text-neutral-500"}`}>{label}</span>
+                        <span className="text-sm text-neutral-500 block mt-1 leading-relaxed">{desc}</span>
                       </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors
                         ${on ? "bg-green-500 border-green-500" : "border-neutral-700"}`}>
                         {on && (
-                          <svg className="w-3 h-3 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
                     </button>
-                    {hasRanges && on && (
-                      <div className="pb-3 px-5">
-                        <div className="ml-8 space-y-2.5">
-                          <div>
-                            <span className="text-[10px] text-neutral-600 uppercase tracking-widest mb-1.5 block">Time Range</span>
-                            <div className="flex flex-wrap gap-2">
-                              {TIME_RANGES.map((r) => {
-                                const rangeKey = `${key}_${r.key}`;
-                                const rangeOn = selectedRanges.has(rangeKey);
-                                return (
-                                  <button
-                                    key={rangeKey}
-                                    onClick={() => toggleRange(rangeKey)}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border
-                                      ${rangeOn
-                                        ? "bg-green-500/15 text-green-400 border-green-500/25"
-                                        : "bg-neutral-800/50 text-neutral-500 border-neutral-700/40 hover:border-neutral-600"
-                                      }`}
-                                  >
-                                    {r.label}
-                                  </button>
-                                );
-                              })}
+                    
+                    <AnimatePresence>
+                      {hasRanges && on && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="px-6 pb-5"
+                        >
+                          <div className="ml-10 space-y-4 pt-2 border-t border-white/[0.04]">
+                            <div>
+                              <span className="text-xs text-neutral-500 uppercase tracking-widest mb-2.5 block font-medium">Time Range</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {TIME_RANGES.map((r) => {
+                                  const rangeKey = `${key}_${r.key}`;
+                                  const rangeOn = selectedRanges.has(rangeKey);
+                                  return (
+                                    <button
+                                      key={rangeKey}
+                                      onClick={() => toggleRange(rangeKey)}
+                                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border
+                                        ${rangeOn
+                                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                          : "bg-neutral-800/50 text-neutral-400 border-neutral-700/40 hover:border-neutral-600 hover:text-neutral-300"
+                                        }`}
+                                    >
+                                      {r.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-xs text-neutral-500 uppercase tracking-widest mb-2.5 block font-medium">Limit</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {LIMIT_OPTIONS.map((opt) => {
+                                  const isActive = topLimit === opt.value;
+                                  return (
+                                    <button
+                                      key={opt.label}
+                                      onClick={() => setTopLimit(opt.value)}
+                                      className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border
+                                        ${isActive
+                                          ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                          : "bg-neutral-800/50 text-neutral-400 border-neutral-700/40 hover:border-neutral-600 hover:text-neutral-300"
+                                        }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <span className="text-[10px] text-neutral-600 uppercase tracking-widest mb-1.5 block">Limit</span>
-                            <div className="flex flex-wrap gap-2">
-                              {LIMIT_OPTIONS.map((opt) => {
-                                const isActive = topLimit === opt.value;
-                                return (
-                                  <button
-                                    key={opt.label}
-                                    onClick={() => setTopLimit(opt.value)}
-                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer border
-                                      ${isActive
-                                        ? "bg-green-500/15 text-green-400 border-green-500/25"
-                                        : "bg-neutral-800/50 text-neutral-500 border-neutral-700/40 hover:border-neutral-600"
-                                      }`}
-                                  >
-                                    {opt.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 );
               })}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Format */}
-          <div className="mb-8 animate-slide-up" style={{ animationDelay: "150ms" }}>
-            <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium block mb-3">Format</span>
-            <div className="inline-flex bg-neutral-900/80 rounded-xl p-1 gap-0.5 border border-white/[0.04]">
+          <motion.div variants={itemVariants} className="mb-10">
+            <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium block mb-4">Format</span>
+            <div className="inline-flex bg-neutral-900/80 rounded-xl p-1 gap-1 border border-white/[0.04]">
               {(["json", "csv"] as const).map((f) => (
                 <button
                   key={f}
                   onClick={() => setFormat(f)}
-                  className={`px-6 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer
+                  className={`px-8 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all cursor-pointer
                     ${format === f ? "bg-white/10 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-300"}`}
                 >
                   {f}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-neutral-600 mt-2.5 leading-relaxed">
+            <p className="text-sm text-neutral-500 mt-3 leading-relaxed max-w-lg">
               {format === "json"
-                ? "JSON — A single structured file containing all selected data. Best for developers or importing into other tools."
-                : "CSV — One spreadsheet file per category. Opens directly in Excel, Google Sheets, or Numbers."}
+                ? "JSON — Best for developers. A single file containing structured data across all selected categories."
+                : "CSV — Best for spreadsheets. Creates separate files for each category (downloads as multiple files)."}
             </p>
-          </div>
+          </motion.div>
 
           {/* Export Summary & Button */}
-          <div className="mb-10 animate-slide-up" style={{ animationDelay: "200ms" }}>
+          <motion.div variants={itemVariants} className="mb-10">
             {selectedCount > 0 && (
-              <p className="text-xs text-neutral-500 mb-3 leading-relaxed">
-                <span className="text-neutral-400 font-medium">{summaryParts.length} {summaryParts.length === 1 ? "item" : "items"}</span>
-                {" "}will be exported as {format.toUpperCase()}: {summaryParts.join(", ")}
+              <p className="text-sm text-neutral-400 mb-4 leading-relaxed max-w-xl">
+                Ready to export <strong className="text-white">{summaryParts.length} {summaryParts.length === 1 ? "item" : "items"}</strong> as {format.toUpperCase()}:
+                <br />
+                <span className="text-neutral-500">{summaryParts.join(" · ")}</span>
               </p>
             )}
             <button
               onClick={handleExport}
               disabled={exporting || selected.size === 0}
-              className="w-full h-12 bg-white text-black text-sm font-semibold rounded-xl
-                hover:bg-neutral-100 active:bg-neutral-200
-                disabled:bg-neutral-800/80 disabled:text-neutral-600 disabled:cursor-not-allowed
+              className="w-full sm:w-auto px-10 h-12 bg-green-500 text-black text-sm font-bold rounded-xl
+                hover:bg-green-400 active:bg-green-600
+                disabled:bg-neutral-800 disabled:text-neutral-600 disabled:cursor-not-allowed
                 transition-colors cursor-pointer"
             >
               {exporting ? (
                 <span className="inline-flex items-center gap-2">
-                  <span className="h-3.5 w-3.5 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
-                  Exporting…
+                  <span className="h-4 w-4 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
+                  Generating Export…
                 </span>
               ) : selected.size === 0 ? (
                 "Select at least one category"
               ) : (
-                "Export"
+                `Export Data as ${format.toUpperCase()}`
               )}
             </button>
-          </div>
+          </motion.div>
 
           {/* Activity Log */}
-          {(logs.length > 0 || totalSteps > 0) && (
-            <div>
-              <div className="flex items-baseline justify-between mb-3">
-                <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">Activity</span>
+          <AnimatePresence>
+            {(logs.length > 0 || totalSteps > 0) && (
+              <motion.div
+                layout
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-baseline justify-between mb-3">
+                  <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">Activity Console</span>
+                  {totalSteps > 0 && (
+                    <span className="text-xs text-neutral-500 tabular-nums font-medium">{progress} / {totalSteps}</span>
+                  )}
+                </div>
+
                 {totalSteps > 0 && (
-                  <span className="text-xs text-neutral-600 tabular-nums font-medium">{progress}/{totalSteps}</span>
+                  <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden mb-4">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${exportComplete ? "bg-green-500" : "bg-green-500"}`}
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
                 )}
-              </div>
 
-              {totalSteps > 0 && (
-                <div className="h-1 bg-neutral-800 rounded-full overflow-hidden mb-4">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ease-out ${exportComplete ? "bg-green-500" : "bg-green-500"}`}
-                    style={{ width: `${progressPercent}%` }}
-                  />
+                {exportComplete && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-5 mb-4 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-green-500">Export complete</p>
+                      <p className="text-sm text-green-500/70 mt-0.5">Your files have been downloaded successfully.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-neutral-900/80 rounded-xl p-5 max-h-96 overflow-y-auto space-y-1.5 font-mono border border-white/[0.04]">
+                  {logs.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className={`text-[13px] leading-relaxed flex items-start gap-2.5
+                        ${entry.type === "success" ? "text-green-500"
+                          : entry.type === "error" ? "text-red-400"
+                          : entry.type === "warn" ? "text-amber-400"
+                          : "text-neutral-400"}`}
+                    >
+                      <span className="shrink-0 mt-[3px]">
+                        {entry.type === "success" ? "✓" : entry.type === "error" ? "✗" : entry.type === "warn" ? "!" : "·"}
+                      </span>
+                      <span>{entry.message}</span>
+                    </div>
+                  ))}
+                  <div ref={logEndRef} />
                 </div>
-              )}
-
-              {exportComplete && (
-                <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-green-400">Export complete</p>
-                    <p className="text-xs text-green-500/60 mt-0.5">Your files have been downloaded. Check your downloads folder.</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-neutral-900/80 rounded-xl p-4 max-h-72 overflow-y-auto space-y-1 font-mono border border-white/[0.04]">
-                {logs.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className={`text-xs leading-relaxed flex items-start gap-2
-                      ${entry.type === "success" ? "text-green-500"
-                        : entry.type === "error" ? "text-red-400"
-                        : entry.type === "warn" ? "text-amber-400"
-                        : "text-neutral-500"}`}
-                  >
-                    <span className="shrink-0 mt-0.5">
-                      {entry.type === "success" ? "✓" : entry.type === "error" ? "✗" : entry.type === "warn" ? "!" : "·"}
-                    </span>
-                    <span>{entry.message}</span>
-                  </div>
-                ))}
-                <div ref={logEndRef} />
-              </div>
-            </div>
-          )}
-        </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
       </main>
     </div>
   );
