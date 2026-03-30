@@ -11,7 +11,7 @@ const inter = Inter({
 const SITE_URL = "https://exportify.kumarsomesh.com";
 const TITLE = "Exportify — Export Your Spotify Data";
 const DESCRIPTION =
-  "Export your Spotify liked songs, playlists, top tracks, top artists, followed artists, and recently played as JSON or CSV. Free, open-source, and runs entirely in your browser — no server, no sign-up.";
+  "Export your Spotify liked songs, playlists, top tracks, top artists, followed artists, and recently played as JSON or CSV. Transfer your Spotify library to YouTube Music. Free, open-source, and runs entirely in your browser — no server, no sign-up.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -35,6 +35,9 @@ export const metadata: Metadata = {
     "spotify to json",
     "spotify backup",
     "spotify library export",
+    "spotify to youtube music",
+    "transfer spotify playlist",
+    "spotify youtube music transfer",
     "exportify",
   ],
   icons: {

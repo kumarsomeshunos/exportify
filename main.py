@@ -1,4 +1,4 @@
-"""Exportify — Export your Spotify data to JSON/CSV."""
+"""Exportify — Export your Spotify data to JSON/CSV, transfer to YouTube Music."""
 
 import csv
 import json
@@ -338,6 +338,11 @@ EXPORT_OPTIONS = [
     ("recently_played", "Recently Played"),
 ]
 
+TRANSFER_OPTIONS = [
+    ("liked_songs", "Liked Songs", "Transfer all your liked songs to YouTube Music"),
+    ("playlists", "Playlists", "Recreate your Spotify playlists on YouTube Music"),
+]
+
 
 class ExportifyApp(App):
     TITLE = "Exportify"
@@ -347,6 +352,7 @@ class ExportifyApp(App):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("e", "export", "Export"),
+        ("t", "transfer", "Transfer"),
         ("a", "select_all", "Select All"),
         ("n", "select_none", "Select None"),
     ]
@@ -355,6 +361,9 @@ class ExportifyApp(App):
         super().__init__()
         self.sp = sp
         self.user_info = user_info
+        self._mode = "export"  # "export" or "transfer"
+        self._ytmusic = None
+        self._ytmusic_connected = False
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -363,16 +372,42 @@ class ExportifyApp(App):
             with Vertical(id="sidebar"):
                 yield Static(f"  {self.user_info['display_name']}", id="user-info")
                 yield Rule()
-                yield Label("Export Categories", id="section-label")
-                for key, label in EXPORT_OPTIONS:
-                    yield Checkbox(label, value=True, id=f"cb-{key}")
+
+                # Mode tabs
+                yield Label("Mode", id="mode-label")
+                with Horizontal(id="mode-tabs"):
+                    yield Button("Export", variant="success", id="mode-export-btn", classes="mode-active")
+                    yield Button("Transfer", variant="primary", id="mode-transfer-btn")
                 yield Rule()
-                yield Label("Format", id="format-label")
-                with RadioSet(id="format-radio"):
-                    yield RadioButton("JSON", value=True, id="fmt-json")
-                    yield RadioButton("CSV", id="fmt-csv")
-                yield Rule()
-                yield Button("Export", variant="success", id="export-btn")
+
+                # Export panel
+                with Vertical(id="export-panel"):
+                    yield Label("Export Categories", id="section-label")
+                    for key, label in EXPORT_OPTIONS:
+                        yield Checkbox(label, value=True, id=f"cb-{key}")
+                    yield Rule()
+                    yield Label("Format", id="format-label")
+                    with RadioSet(id="format-radio"):
+                        yield RadioButton("JSON", value=True, id="fmt-json")
+                        yield RadioButton("CSV", id="fmt-csv")
+                    yield Rule()
+                    yield Button("Export", variant="success", id="export-btn")
+
+                # Transfer panel (hidden by default)
+                with Vertical(id="transfer-panel", classes="hidden"):
+                    yield Label("YouTube Music", id="ytm-label")
+                    yield Static("  ○ Not connected", id="ytm-status")
+                    yield Button("Connect YouTube Music", variant="warning", id="ytm-connect-btn")
+                    yield Rule()
+                    yield Label("Transfer Categories", id="transfer-section-label")
+                    for key, label, desc in TRANSFER_OPTIONS:
+                        yield Checkbox(label, value=True, id=f"tcb-{key}")
+                    yield Rule()
+                    yield Label("Direction", id="direction-label")
+                    yield Static("  Spotify → YouTube Music", id="direction-info")
+                    yield Rule()
+                    yield Button("Start Transfer", variant="success", id="transfer-btn", disabled=True)
+
             with Vertical(id="content"):
                 yield ProgressBar(total=100, show_eta=False, id="progress")
                 yield RichLog(highlight=True, markup=True, id="log")
@@ -381,7 +416,8 @@ class ExportifyApp(App):
         log = self.query_one("#log", RichLog)
         log.write(Text.from_markup("[bold green]Welcome to Exportify![/]"))
         log.write(Text.from_markup(f"Logged in as [bold]{self.user_info['display_name']}[/] ({self.user_info['id']})"))
-        log.write(Text.from_markup("\nSelect categories and press [bold]Export[/] or hit [bold]E[/] to start.\n"))
+        log.write(Text.from_markup("\n[bold]Export mode:[/] Select categories and press [bold]E[/] to export your Spotify data."))
+        log.write(Text.from_markup("[bold]Transfer mode:[/] Press [bold]T[/] to switch to transfer mode and move your music to YouTube Music.\n"))
 
     def _log(self, message: str) -> None:
         log_widget = self.query_one("#log", RichLog)
@@ -395,24 +431,240 @@ class ExportifyApp(App):
                 selected.append(key)
         return selected
 
+    def _get_transfer_selected(self) -> list[str]:
+        selected = []
+        for key, _, _ in TRANSFER_OPTIONS:
+            cb = self.query_one(f"#tcb-{key}", Checkbox)
+            if cb.value:
+                selected.append(key)
+        return selected
+
     def _get_format(self) -> str:
         fmt_json = self.query_one("#fmt-json", RadioButton)
         return "json" if fmt_json.value else "csv"
 
+    def _switch_mode(self, mode: str) -> None:
+        """Switch between export and transfer mode."""
+        self._mode = mode
+        export_panel = self.query_one("#export-panel")
+        transfer_panel = self.query_one("#transfer-panel")
+        export_btn = self.query_one("#mode-export-btn", Button)
+        transfer_btn = self.query_one("#mode-transfer-btn", Button)
+
+        if mode == "export":
+            export_panel.remove_class("hidden")
+            transfer_panel.add_class("hidden")
+            export_btn.add_class("mode-active")
+            transfer_btn.remove_class("mode-active")
+        else:
+            export_panel.add_class("hidden")
+            transfer_panel.remove_class("hidden")
+            export_btn.remove_class("mode-active")
+            transfer_btn.add_class("mode-active")
+
     def action_export(self) -> None:
-        self.run_export()
+        if self._mode != "export":
+            self._switch_mode("export")
+        else:
+            self.run_export()
+
+    def action_transfer(self) -> None:
+        if self._mode != "transfer":
+            self._switch_mode("transfer")
+            self._log("[bold cyan]Switched to Transfer mode.[/]")
+            if not self._ytmusic_connected:
+                self._log("Connect to YouTube Music to start transferring your Spotify data.")
+        else:
+            self.run_transfer()
 
     def action_select_all(self) -> None:
-        for key, _ in EXPORT_OPTIONS:
-            self.query_one(f"#cb-{key}", Checkbox).value = True
+        if self._mode == "export":
+            for key, _ in EXPORT_OPTIONS:
+                self.query_one(f"#cb-{key}", Checkbox).value = True
+        else:
+            for key, _, _ in TRANSFER_OPTIONS:
+                self.query_one(f"#tcb-{key}", Checkbox).value = True
 
     def action_select_none(self) -> None:
-        for key, _ in EXPORT_OPTIONS:
-            self.query_one(f"#cb-{key}", Checkbox).value = False
+        if self._mode == "export":
+            for key, _ in EXPORT_OPTIONS:
+                self.query_one(f"#cb-{key}", Checkbox).value = False
+        else:
+            for key, _, _ in TRANSFER_OPTIONS:
+                self.query_one(f"#tcb-{key}", Checkbox).value = False
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "export-btn":
             self.run_export()
+        elif event.button.id == "transfer-btn":
+            self.run_transfer()
+        elif event.button.id == "mode-export-btn":
+            self._switch_mode("export")
+        elif event.button.id == "mode-transfer-btn":
+            self._switch_mode("transfer")
+            if not self._ytmusic_connected:
+                self._log("[bold cyan]Switched to Transfer mode.[/]")
+                self._log("Connect to YouTube Music to start transferring your Spotify data.")
+        elif event.button.id == "ytm-connect-btn":
+            self.connect_ytmusic()
+
+    @work(thread=True)
+    def connect_ytmusic(self) -> None:
+        """Connect to YouTube Music via OAuth."""
+        self.call_from_thread(self._log, "\n[bold cyan]Connecting to YouTube Music...[/]")
+        self.call_from_thread(
+            self._log,
+            "[dim]A browser window will open for Google sign-in.[/]"
+        )
+        self.call_from_thread(
+            self._log,
+            "[dim]Sign in with the Google account linked to your YouTube Music.[/]\n"
+        )
+
+        try:
+            from ytmusic import get_ytmusic_client
+            self._ytmusic = get_ytmusic_client()
+            self._ytmusic_connected = True
+
+            # Update UI
+            status = self.query_one("#ytm-status", Static)
+            self.call_from_thread(status.update, "  ● Connected")
+            self.call_from_thread(status.add_class, "ytm-connected")
+
+            connect_btn = self.query_one("#ytm-connect-btn", Button)
+            self.call_from_thread(setattr, connect_btn, "disabled", True)
+            self.call_from_thread(setattr, connect_btn, "label", "Connected ✓")
+
+            transfer_btn = self.query_one("#transfer-btn", Button)
+            self.call_from_thread(setattr, transfer_btn, "disabled", False)
+
+            self.call_from_thread(self._log, "[bold green]✓ Connected to YouTube Music![/]")
+            self.call_from_thread(
+                self._log,
+                "You can now select categories and start transferring your Spotify data.\n"
+            )
+
+        except Exception as e:
+            self.call_from_thread(
+                self._log,
+                f"[bold red]Error connecting to YouTube Music:[/] {e}"
+            )
+            self.call_from_thread(
+                self._log,
+                "[dim]Make sure you have a YouTube Music account and try again.[/]\n"
+            )
+
+    @work(thread=True)
+    def run_transfer(self) -> None:
+        """Transfer Spotify data to YouTube Music."""
+        if not self._ytmusic_connected or not self._ytmusic:
+            self.call_from_thread(
+                self._log,
+                "[bold yellow]Connect to YouTube Music first.[/]"
+            )
+            return
+
+        selected = self._get_transfer_selected()
+        if not selected:
+            self.call_from_thread(self._log, "[bold yellow]No categories selected.[/]")
+            return
+
+        from ytmusic import transfer_liked_songs, transfer_playlist
+
+        btn = self.query_one("#transfer-btn", Button)
+        progress = self.query_one("#progress", ProgressBar)
+
+        self.call_from_thread(setattr, btn, "disabled", True)
+        self.call_from_thread(
+            self._log,
+            "\n[bold green]Starting transfer...[/] Spotify → YouTube Music"
+        )
+
+        def log(msg):
+            self.call_from_thread(self._log, msg)
+
+        try:
+            if "liked_songs" in selected:
+                log("  [cyan]Fetching liked songs from Spotify...[/]")
+                liked = fetch_liked_songs(self.sp, log_fn=log)
+                log(f"  [green]✓[/] Found [bold]{len(liked)}[/] liked songs")
+
+                # Set progress for liked songs transfer
+                self.call_from_thread(setattr, progress, "total", len(liked))
+                current_step = 0
+
+                def advance_liked():
+                    nonlocal current_step
+                    current_step += 1
+                    self.call_from_thread(progress.update, progress=current_step)
+
+                log("  [cyan]Transferring liked songs to YouTube Music...[/]")
+                stats = transfer_liked_songs(liked, self._ytmusic, log_fn=log, progress_fn=advance_liked)
+
+                log(f"\n  [bold]Liked Songs transfer summary:[/]")
+                log(f"    [green]Matched:[/] {stats['matched']}/{stats['total']}")
+                log(f"    [yellow]Not found:[/] {stats['not_found']}")
+                if stats["errors"]:
+                    log(f"    [red]Errors:[/] {stats['errors']}")
+                log("")
+
+            if "playlists" in selected:
+                log("  [cyan]Fetching playlists from Spotify...[/]")
+                playlists = fetch_playlists(self.sp, log_fn=log)
+                log(f"  [green]✓[/] Found [bold]{len(playlists)}[/] playlists")
+
+                user_market = self.user_info.get("country")
+                total_pl_tracks = sum(pl.get("total_tracks", 0) for pl in playlists)
+                self.call_from_thread(setattr, progress, "total", total_pl_tracks)
+                current_step = 0
+
+                def advance_playlist():
+                    nonlocal current_step
+                    current_step += 1
+                    self.call_from_thread(progress.update, progress=current_step)
+
+                overall_stats = {"matched": 0, "not_found": 0, "errors": 0, "playlists_created": 0}
+
+                for pl in playlists:
+                    log(f"\n  [cyan]Processing: {pl['name'][:50]}[/]")
+                    try:
+                        tracks = fetch_playlist_tracks(
+                            self.sp, pl["id"], market=user_market, log_fn=log
+                        )
+                    except SpotifyException as e:
+                        log(
+                            f"    [yellow]⚠[/] Skipped '{pl['name'][:50]}' "
+                            f"({e.http_status}: access restricted)"
+                        )
+                        continue
+
+                    if not tracks:
+                        log(f"    [dim]Empty playlist — skipping[/]")
+                        continue
+
+                    stats = transfer_playlist(
+                        pl["name"], tracks, self._ytmusic,
+                        log_fn=log, progress_fn=advance_playlist,
+                    )
+                    overall_stats["matched"] += stats["matched"]
+                    overall_stats["not_found"] += stats["not_found"]
+                    overall_stats["errors"] += stats["errors"]
+                    if stats.get("playlist_id"):
+                        overall_stats["playlists_created"] += 1
+
+                log(f"\n  [bold]Playlist transfer summary:[/]")
+                log(f"    [green]Playlists created:[/] {overall_stats['playlists_created']}/{len(playlists)}")
+                log(f"    [green]Tracks matched:[/] {overall_stats['matched']}")
+                log(f"    [yellow]Tracks not found:[/] {overall_stats['not_found']}")
+                if overall_stats["errors"]:
+                    log(f"    [red]Errors:[/] {overall_stats['errors']}")
+
+            log(f"\n[bold green]Transfer complete![/]")
+
+        except Exception as e:
+            log(f"[bold red]Error:[/] {e}")
+        finally:
+            self.call_from_thread(setattr, btn, "disabled", False)
 
     @work(thread=True)
     def run_export(self) -> None:

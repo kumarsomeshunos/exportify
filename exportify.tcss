@@ -3,7 +3,7 @@
 }
 
 #sidebar {
-    width: 36;
+    width: 40;
     padding: 1 2;
     background: $boost;
     border-right: tall $background-lighten-2;
@@ -20,7 +20,33 @@
     padding-bottom: 1;
 }
 
+#mode-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#mode-tabs {
+    height: auto;
+    padding-bottom: 0;
+}
+
+#mode-tabs Button {
+    width: 1fr;
+    min-width: 12;
+    margin: 0 1 1 0;
+}
+
+#mode-tabs Button.mode-active {
+    text-style: bold;
+    border-bottom: thick $success;
+}
+
 #section-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#transfer-section-label {
     text-style: bold;
     padding-bottom: 1;
 }
@@ -38,6 +64,45 @@
 #export-btn {
     width: 100%;
     margin-top: 1;
+}
+
+#transfer-btn {
+    width: 100%;
+    margin-top: 1;
+}
+
+#ytm-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#ytm-status {
+    padding-bottom: 1;
+    color: $text-muted;
+}
+
+#ytm-status.ytm-connected {
+    color: $success;
+    text-style: bold;
+}
+
+#ytm-connect-btn {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#direction-label {
+    text-style: bold;
+    padding-bottom: 1;
+}
+
+#direction-info {
+    color: $accent;
+    padding-bottom: 0;
+}
+
+.hidden {
+    display: none;
 }
 
 #progress {

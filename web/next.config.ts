@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://va.vercel-scripts.com",
+              "connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://va.vercel-scripts.com https://www.googleapis.com https://oauth2.googleapis.com https://accounts.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

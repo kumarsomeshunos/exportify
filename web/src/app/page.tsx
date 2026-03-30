@@ -226,7 +226,7 @@ export default function HomePage() {
             <span className="text-green-500">yours to keep.</span>
           </h1>
           <p className="text-lg text-neutral-400 mb-3 max-w-md mx-auto leading-relaxed">
-            Export your liked songs, playlists, top tracks, artists, and listening history as JSON or CSV.
+            Export your liked songs, playlists, top tracks, artists, and listening history as JSON or CSV. Or transfer your library to YouTube Music.
           </p>
           <p className="text-sm text-neutral-600 mb-10 max-w-sm mx-auto leading-relaxed">
             Everything runs in your browser. No accounts, no servers, no data collection. Just your music data, downloaded directly.
@@ -252,12 +252,43 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* What You Can Export */}
+        {/* What You Can Do */}
         <div className="max-w-2xl w-full pt-20 pb-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
           <div className="text-center mb-8">
-            <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">What you can export</span>
-            <h2 className="text-2xl font-semibold tracking-tight mt-2">Six categories of your Spotify data</h2>
+            <span className="text-xs text-neutral-500 uppercase tracking-widest font-medium">What you can do</span>
+            <h2 className="text-2xl font-semibold tracking-tight mt-2">Export your data or transfer to another platform</h2>
           </div>
+
+          {/* Transfer Feature Highlight */}
+          <div className="bg-gradient-to-br from-neutral-900/90 via-neutral-900/80 to-neutral-800/60 rounded-2xl p-6 mb-4 border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+            <div className="flex items-start gap-4">
+              <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                  </svg>
+                </div>
+                <svg className="w-4 h-4 text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-[15px] font-semibold">Spotify → YouTube Music</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20">New</span>
+                </div>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Transfer your liked songs and playlists from Spotify to YouTube Music. Exportify searches for each track, matches it with smart confidence scoring, and recreates your library on YouTube Music — all from your browser.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {FEATURES.map(({ icon, title, desc }) => (
               <div key={title} className="bg-neutral-900/80 rounded-2xl p-5 hover:bg-neutral-800/60 transition-colors border border-white/[0.04]">
@@ -289,8 +320,8 @@ export default function HomePage() {
               },
               {
                 n: "3",
-                t: "Choose & Download",
-                d: "Select the data categories and time ranges you want, pick JSON or CSV, and download instantly.",
+                t: "Export or Transfer",
+                d: "Export your data as JSON/CSV, or connect YouTube Music and transfer your library across platforms.",
               },
             ].map((s) => (
               <div key={s.n} className="text-center">
@@ -312,7 +343,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold tracking-tight">Built for privacy</h3>
             </div>
             <p className="text-sm text-neutral-400 leading-relaxed max-w-md mx-auto mb-6">
-              Exportify has no backend. Your Spotify tokens and data stay in your browser and are never sent anywhere except directly to Spotify&apos;s API. The entire codebase is open source.
+              Exportify has no backend. Your Spotify and YouTube Music tokens and data stay in your browser and are never sent anywhere except directly to the respective APIs. The entire codebase is open source.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-neutral-500">
               <span className="flex items-center gap-1.5">

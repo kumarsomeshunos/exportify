@@ -287,11 +287,13 @@ export default function ExportPage() {
       <header className="sticky top-0 z-50 bg-black/80 backdrop-blur-2xl border-b border-white/[0.06] animate-fade-in">
         <div className="max-w-xl mx-auto px-6 h-12 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-[15px] font-semibold tracking-tight">Exportify</span>
+            <a href="/" className="text-[15px] font-semibold tracking-tight hover:text-neutral-300 transition-colors">Exportify</a>
             <span className="text-neutral-700">·</span>
             <span className="text-sm text-neutral-500">{user.display_name}</span>
           </div>
           <div className="flex items-center gap-4">
+            <span className="text-xs text-white font-medium">Export</span>
+            <a href="/transfer" className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors">Transfer</a>
             <button
               onClick={handleFullReset}
               className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors cursor-pointer"
