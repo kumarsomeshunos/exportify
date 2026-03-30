@@ -98,8 +98,15 @@ export default function TransferPage() {
   };
 
   const handleConnectYouTube = () => {
-    const stored = getStoredGoogleClientId();
-    if (!stored) {
+    const storedId = getStoredGoogleClientId();
+    const storedSecret = getStoredGoogleClientSecret();
+    if (!storedId || !storedSecret) {
+      // Missing either credential — open wizard at the appropriate step
+      if (storedId && !storedSecret) {
+        // Has ID but no secret (upgraded from old version) — jump to credentials step
+        setGoogleClientIdInput(storedId);
+        setYtSetupStep(3);
+      }
       setShowYtSetup(true);
       return;
     }
